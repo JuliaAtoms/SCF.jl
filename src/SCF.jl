@@ -99,7 +99,7 @@ function scf!(fun!::Function, fock::Fock{Q};
         fun!(coeffs)
 
         for j = 1:norb
-            Δ[j] = 1.0 - dot(coeffs[:,j],orbitals[:,j])
+            Δ[j] = 1.0 - dot(coeffs[:,j],orbitals[:,j])/norm(orbitals[:,j])^2
         end
 
         aΔ = norm(Δ)
