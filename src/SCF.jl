@@ -25,7 +25,10 @@ function Base.show(io::IO, ::MIME"text/plain", fock::Fock{Q,E}) where {Q,E}
     write(io, "Fock operator with\n- quantum system: ")
     show(io, "text/plain", fock.quantum_system)
     write(io, "\n- SCF equations:  ")
-    show(io, "text/plain", fock.equations)
+    for eq in fock.equations
+        write(io, "\n  - ")
+        show(io, "text/plain", eq)
+    end
 end
 
 Base.view(::Fock{Q}, args...) where Q =
@@ -39,7 +42,7 @@ LinearAlgebra.ldiv!(::Fock{Q}, v) where Q =
 
 Perform the SCF iterations for the `fock` operator. The actual
 solution of the secular equations is performed by the implementation
-of `ldiv!(y, fock, x)`. The optional `fun!` argument allows for extra
+of `ldiv!(fock, y)`. The optional `fun!` argument allows for extra
 operations to be performed every SCF cycle (such as rotations, etc).
 
 `ω` is a relaxation parameter; the coefficients are updated as `cᵢ₊₁ =
@@ -77,6 +80,12 @@ function scf!(fun!::Function, fock::Fock{Q};
         println("Self-consistent field calculation of")
         print("- ")
         display(fock.quantum_system)
+        print("- SCF equations")
+        for eq in fock.equations
+            print("\n  - ")
+            show(stdout, "text/plain", eq)
+        end
+        println()
         println("- Maximum amount of iterations: $(max_iter)")
         tb,te = base_exp(tol)
         println("- Stopping tolerance: ", format(tolerance.tol_fmt, tb, to_superscript(te)))
