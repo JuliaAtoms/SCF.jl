@@ -34,8 +34,8 @@ end
 Base.view(::Fock{Q}, args...) where Q =
     throw(ArgumentError("`view` not implemented for `Fock{$Q}`"))
 
-LinearAlgebra.ldiv!(::Fock{Q}, v) where Q =
-    throw(ArgumentError("`ldiv!` not implemented for `Fock{$Q}`"))
+LinearAlgebra.ldiv!(::Fock{Q,E}, v::V; kwargs...) where {Q,E,V} =
+    throw(ArgumentError("`ldiv!` not implemented for `Fock{$Q,$E}\\$V`"))
 
 """
     scf!([fun!, ]fock[; ω=0, max_iter=200, tol=1e-8, verbosity=1])
@@ -55,7 +55,7 @@ equals `max_iter` or the change in the coefficients is below `tol`.
 """
 function scf!(fun!::Function, fock::Fock{Q};
               ω=0, max_iter=200, tol=1e-8,
-              verbosity=1) where Q
+              verbosity=1, kwargs...) where Q
     trace,tolerance = if verbosity > 1
         trace = SolverTrace(max_iter,
                             CurrentStep(max_iter,
@@ -93,9 +93,9 @@ function scf!(fun!::Function, fock::Fock{Q};
         println()
     end
 
-    print_header(trace)
+    !isnothing(trace) && print_header(trace)
     for i = 1:max_iter
-        ldiv!(fock, coeffs)
+        ldiv!(fock, coeffs; verbosity=verbosity-2, kwargs...)
         fun!(coeffs)
 
         for j = 1:norb
