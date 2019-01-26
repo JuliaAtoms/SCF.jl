@@ -37,6 +37,29 @@ Base.view(::Fock{Q}, args...) where Q =
 LinearAlgebra.ldiv!(::Fock{Q,E}, v::V; kwargs...) where {Q,E,V} =
     throw(ArgumentError("`ldiv!` not implemented for `Fock{$Q,$E}\\$V`"))
 
+energy(fock::Fock) = sum(energy(eq) for eq in fock.equations)
+
+mutable struct EnergyColumn{T<:AbstractFloat} <: TraceColumn
+    E::T
+    fmt::FormatExpr
+    header::String
+    eV::Bool
+end
+
+function EnergyColumn(E::T, eV::Bool=true) where T
+    header = "Energy"
+    fmt = if eV
+        FormatExpr("{1:+10.5f} Ha {2:+10.5f} eV")
+    else
+        FormatExpr("{1:+10.5f} Ha")
+    end
+    EnergyColumn(E, fmt,
+                 rpad(header, length(eV ? format(fmt, E, E) : format(fmt, E))), eV)
+end
+
+(e::EnergyColumn)(::Integer) =
+    e.eV ? (e.E,27.211e.E) : (e.E,)
+
 """
     scf!([fun!, ]fock[; ω=0, max_iter=200, tol=1e-8, verbosity=1])
 
@@ -55,18 +78,23 @@ equals `max_iter` or the change in the coefficients is below `tol`.
 """
 function scf!(fun!::Function, fock::Fock{Q};
               ω=0, max_iter=200, tol=1e-8,
-              verbosity=1, kwargs...) where Q
-    trace,tolerance = if verbosity > 1
+              verbosity=1, num_printouts=min(max_iter,10),
+              kwargs...) where Q
+    trace,tolerance,eng = if verbosity > 1
         trace = SolverTrace(max_iter,
                             CurrentStep(max_iter,
                                         lc=LinearColorant(max_iter,1,SolverTraces.red_green_scale()),
-                                        header="Iteration"))
+                                        header="Iteration"),
+                            progress_meter=false,
+                            num_printouts=num_printouts)
 
         tolerance = Tolerance(tol, print_target=false)
         push!(trace, tolerance)
-        trace,tolerance
+        eng = EnergyColumn(0.0)
+        push!(trace, eng)
+        trace,tolerance,eng
     else
-        nothing,nothing
+        nothing,nothing,nothing
     end
 
     orbitals = view(fock, :, :)
@@ -119,6 +147,7 @@ function scf!(fun!::Function, fock::Fock{Q};
             orbitals[:] += coeffs[:] # Is this efficient?
         end
 
+        isnothing(eng) || (eng.E = energy(fock))
         SolverTraces.next!(trace)
 
         if aΔ < tol
