@@ -103,10 +103,6 @@ function scf!(fun!::Function, fock::Fock{Q};
         end
 
         aΔ = norm(Δ)
-        if aΔ < tol
-            println()
-            break
-        end
         isnothing(tolerance) || (tolerance.current = aΔ)
 
         if ω == 0
@@ -124,6 +120,11 @@ function scf!(fun!::Function, fock::Fock{Q};
         end
 
         SolverTraces.next!(trace)
+
+        if aΔ < tol
+            println()
+            break
+        end
     end
 
     norm(Δ) > tol && @warn "Desired tolerance $(tol) not reached in $(max_iter) iterations"
