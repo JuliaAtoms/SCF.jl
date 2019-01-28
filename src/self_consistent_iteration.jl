@@ -60,6 +60,7 @@ function scf!(fun!::Function, fock::Fock{Q};
     end
 
     !isnothing(trace) && print_header(trace)
+    t₀ = time()
     for i = 1:max_iter
         ldiv!(fock, coeffs; verbosity=verbosity-2, kwargs...)
         fun!(coeffs)
@@ -93,6 +94,8 @@ function scf!(fun!::Function, fock::Fock{Q};
             break
         end
     end
+    elapsed = time() - t₀
+    verbosity > 0 && println("Finished in $(elapsed) seconds")
 
     norm(Δ) > tol && @warn "Desired tolerance $(tol) not reached in $(max_iter) iterations"
 
