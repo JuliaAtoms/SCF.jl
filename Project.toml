@@ -6,6 +6,7 @@ version = "0.1.0"
 [deps]
 ArnoldiMethod = "ec485272-7323-5ecc-a04f-4719b315124d"
 ContinuumArrays = "abb603bd-c6a4-5c0b-b5d0-50a836a7e82c"
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 Formatting = "59287772-0a20-5a39-b81b-1366585eb4c0"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 SolverTraces = "619b3e1a-df4a-11e8-3b0b-a997e0925a8d"

@@ -1,0 +1,9 @@
+#+TITLE: SCF.jl
+#+AUTHOR: Stefanos Carlström
+#+EMAIL: stefanos.carlstrom@gmail.com
+
+[[https://juliaatoms.github.io/SCF.jl/dev/index.html][https://img.shields.io/badge/docs-dev-blue.svg]]
+
+Implementation of the Self-Consistent-Field (SCF) method for solving
+integro-differential equations of the kind that arise in the
+Hartree–Fock approximation of atoms.
