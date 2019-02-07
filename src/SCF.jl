@@ -16,7 +16,6 @@ if VERSION < v"1.1-DEV"
     isnothing(::Any) = false
 end
 
-include("quantum_systems.jl")
 include("krylov_wrapper.jl")
 include("fock.jl")
 include("solver_trace.jl")
