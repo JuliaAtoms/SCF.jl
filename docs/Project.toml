@@ -1,5 +1,2 @@
 [deps]
-ContinuumArrays = "abb603bd-c6a4-5c0b-b5d0-50a836a7e82c"
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
-SCF = "6d1ec750-0562-11e9-273f-e1a7ef9cf2ad"
-SolverTraces = "619b3e1a-df4a-11e8-3b0b-a997e0925a8d"
