@@ -67,8 +67,7 @@ function scf!(fun!::Function, fock::Fock{Q};
     # Energy matrix
     H = spzeros(nc, nc)
     solve_secular_problem!(H, c, fock)
-    # c .= 0
-    # c[1] = 1
+
     if verbosity > 2
         println("Initial energy matrix")
         display(Matrix(H))
@@ -197,13 +196,8 @@ function scf_iteration!(fock::Fock{Q,E}, P::M, H::HM, c::V;
         end
     end
 
-    # If we have more than one mixing coefficient, we are dealing with
-    # a multi-configurational problem.
-    if length(c) > 1 && update_mixing_coefficients
+    update_mixing_coefficients &&
         solve_secular_problem!(H, c, fock, tol=tol)
-    else
-        c[1] = 1
-    end
 
     fock
 end

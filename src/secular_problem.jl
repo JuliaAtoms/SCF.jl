@@ -8,9 +8,14 @@ function solve_secular_problem!(H::M, c::C, fock::F;
                                 tol=√(eps()),
                                 verbosity=0) where {T,M<:AbstractMatrix{T},
                                                     C<:AbstractVector{T}, F<:Fock}
-    verbosity > 0 && println("Solving secular problem")
-
     energy_matrix!(H, fock)
+
+    if length(c) == 1
+        c[1] = one(T)
+        return c
+    end
+
+    verbosity > 0 && println("Solving secular problem")
 
     # This could be more efficient if we could use c as the initial
     # guess for the Arnoldi procedure.
