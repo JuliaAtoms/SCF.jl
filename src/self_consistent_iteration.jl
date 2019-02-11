@@ -54,12 +54,6 @@ function scf!(fun!::Function, fock::Fock{Q};
         println("Self-Consistent-Field calculation of")
         print("- ")
         display(fock.quantum_system)
-        print("- SCF equations")
-        for eq in fock.equations
-            print("\n  - ")
-            show(stdout, "text/plain", eq)
-        end
-        println()
         println("- Maximum amount of iterations: $(max_iter)")
         tb,te = base_exp(tol)
         println("- Stopping tolerance: ", format(tolerance.tol_fmt, tb, to_superscript(te)))
@@ -69,8 +63,32 @@ function scf!(fun!::Function, fock::Fock{Q};
 
     !isnothing(trace) && print_header(trace)
     t₀ = time()
+
+    # Energy matrix
+    H = spzeros(nc, nc)
+    solve_secular_problem!(H, c, fock)
+    # c .= 0
+    # c[1] = 1
+    if verbosity > 2
+        println("Initial energy matrix")
+        display(Matrix(H))
+        println()
+        println("Initial mixing coefficients:")
+        display(c)
+        println()
+    end
+
+    # Trivial sanity check to see if both modes of calculating total
+    # energy agree. Difficult to mess this up.
+    E₁ = energy(fock)
+    E₂ = c'H*c
+    isapprox(E₁, E₂) ||
+        @warn "Energy calculated as sum of orbital energies $(E₁) Ha does not agree with c'H*c = $(E₂) Ha"
+
     for i = 1:max_iter
-        scf_iteration!(fock, P̃, c̃; verbosity=verbosity-2, kwargs...)
+        scf_iteration!(fock, P̃, H, c̃;
+                       update_mixing_coefficients=i>1,
+                       verbosity=verbosity-2, kwargs...)
         fun!(P̃, c̃)
 
         for j = 1:norb
@@ -134,18 +152,18 @@ Perform one step of the SCF iteration. This will
    coefficients, `c`, unless `update_mixing_coefficients==false`.
 
 """
-function scf_iteration!(fock::Fock{Q,E}, P::M, c::V;
+function scf_iteration!(fock::Fock{Q,E}, P::M, H::HM, c::V;
                         verbosity=0, method=:arnoldi,
                         tol=1e-10,
-                        update_mixing_coefficients=true) where {Q,E,M<:AbstractVecOrMat,V<:AbstractVector}
+                        update_mixing_coefficients=true) where {Q,E,M<:AbstractVecOrMat,
+                                                                HM<:AbstractMatrix,V<:AbstractVector}
     verbosity > 0 && println("Improving orbitals using $(method)")
+    update!(fock.equations; verbosity=max(0,verbosity-2))
+
     for (j,eq) in enumerate(fock.equations)
+        h = hamiltonian(eq)
         print_block() do io
-            # Ideally, all direct potentials should be shared among the
-            # equations, such that they are only calculated once per
-            # iteration.
             verbosity > 1 && println(io, eq)
-            update!(eq.hamiltonian; verbosity=max(0,verbosity-2), io=io)
 
             vPj = view(P,:,j)
 
@@ -153,7 +171,7 @@ function scf_iteration!(fock::Fock{Q,E}, P::M, c::V;
                 # It would be preferrable if the Arnoldi state could
                 # be preserved between iterations, pending
                 # https://github.com/haampie/ArnoldiMethod.jl/issues/91
-                schur,history = partialschur(KrylovWrapper(eq.hamiltonian),
+                schur,history = partialschur(KrylovWrapper(h),
                                              nev=1, tol=tol, which=SR())
                 copyto!(vPj, schur.Q[:,1])
                 #= elseif method==:arnoldi_shift_invert
@@ -182,10 +200,7 @@ function scf_iteration!(fock::Fock{Q,E}, P::M, c::V;
     # If we have more than one mixing coefficient, we are dealing with
     # a multi-configurational problem.
     if length(c) > 1 && update_mixing_coefficients
-        verbosity > 0 && println("Solving secular problem")
-        @warn "Not yet implemented"
-
-        normalize!(c)
+        solve_secular_problem!(H, c, fock, tol=tol)
     else
         c[1] = 1
     end

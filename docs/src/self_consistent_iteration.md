@@ -7,6 +7,7 @@ CurrentModule = SCF
 ```@docs
 scf!
 scf_iteration!
+solve_secular_problem!
 ```
 
 ## KrylovWrapper

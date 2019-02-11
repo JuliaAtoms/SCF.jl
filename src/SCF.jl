@@ -2,6 +2,7 @@ module SCF
 
 using LinearAlgebra
 using ArnoldiMethod
+using SparseArrays
 
 using SolverTraces
 import SolverTraces: base_exp
@@ -19,6 +20,7 @@ include("krylov_wrapper.jl")
 include("fock.jl")
 include("solver_trace.jl")
 include("utils.jl")
+include("secular_problem.jl")
 include("self_consistent_iteration.jl")
 
 export Fock, scf!
