@@ -93,7 +93,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Fock Operators",
     "title": "SCF.Fock",
     "category": "type",
-    "text": "Fock(quantum_system, equations)\n\nA Fock operator consists of a quantum_system, from which equations are variationally derived.\n\n\n\n\n\n"
+    "text": "Fock(quantum_system, equations)\n\nA Fock operator consists of a quantum_system, from which equations are variationally derived. equations must be iterable, where each element corresponds to the equation for one orbital, and must provide overloads for the functions energy, energy_matrix!, and hamiltonian.  Additionally, update! must be provided for equations, to prepare the equation system for the next iteration.\n\n\n\n\n\n"
 },
 
 {
@@ -113,11 +113,43 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
+    "location": "fock_operators/#SCF.energy",
+    "page": "Fock Operators",
+    "title": "SCF.energy",
+    "category": "function",
+    "text": "energy(equation::Equation)\n\nComputes the orbital energy of equation. To be overloaded by the user.\n\n\n\n\n\nenergy(fock::Fock)\n\nCalculates the total energy of the system by summing the orbital energies.\n\n\n\n\n\n"
+},
+
+{
+    "location": "fock_operators/#SCF.energy_matrix!",
+    "page": "Fock Operators",
+    "title": "SCF.energy_matrix!",
+    "category": "function",
+    "text": "energy_matrix!(H::AbstractMatrix, equation::Equation)\n\nAssemble the energy matrix for equation, i.e. the matrix where the elements are the energies corresponding to the mixing of configurations, basically the Hamiltonian matrix of the corresponding orbital. This matrix, sandwiched between the mixing coefficients, gives the orbital energy. To be overloaded by the user. NB the matrix elements should be added to, i.e. not overwritten, rather, the overload of energy_matrix! should compute (the equivalent of) H += H_i, where H_i is the energy matrix for equation.\n\n\n\n\n\nenergy_matrix!(H::AbstractMatrix, fock::Fock)\n\nCalculates the total energy matrix of the system by summing the energy matrices of the different orbital equations of fock. This overwrites the entries of H.\n\n\n\n\n\n"
+},
+
+{
+    "location": "fock_operators/#SCF.hamiltonian",
+    "page": "Fock Operators",
+    "title": "SCF.hamiltonian",
+    "category": "function",
+    "text": "hamiltonian(equation::Equation)\n\nReturns the orbital Hamiltonian of equation. To be overloaded by the user.\n\n\n\n\n\n"
+},
+
+{
+    "location": "fock_operators/#SCF.update!",
+    "page": "Fock Operators",
+    "title": "SCF.update!",
+    "category": "function",
+    "text": "update!(eqs; kwargs...)\n\nUpdate the equation system eqs for the current iteration. To be overloaded by the user.\n\n\n\n\n\n"
+},
+
+{
     "location": "fock_operators/#Fock-Operators-1",
     "page": "Fock Operators",
     "title": "Fock Operators",
     "category": "section",
-    "text": "CurrentModule = SCFFock\nnorm_rot!\nrotate_max_lobe!"
+    "text": "CurrentModule = SCFThe Fock operator consists of an AbstractQuantumSystem and a set of coupled integro-differential equations, the solution of which is the objective of the self-consistent field procedure. For the solution process to work, the set of equations need to implement a few methods:It must fulfil Julia\'s iteration interface, i.e. each element must be the equation for a single orbital, which is solved independently from the other equations, but with the other orbitals as inputs.\nenergy which calculates the orbital energy, i.e. matrixelchiHamiltonianchi.\nenergy_matrix! which calculates the energy matrix matH_i for orbital equation i, where vecc^HmatH_ivecc gives the orbital energy for the correspond orbital. The overall energy matrix matH=sum_imatH_i is used to solve the secular problem for the mixing coefficients.\nupdate! which recomputes all orbital-dependent integrals, shared among the equations of the equation system.Fock\nnorm_rot!\nrotate_max_lobe!\nenergy\nenergy_matrix!\nhamiltonian\nupdate!"
 },
 
 {
@@ -145,11 +177,19 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
+    "location": "self_consistent_iteration/#SCF.solve_secular_problem!",
+    "page": "Self-Consistent Iteration",
+    "title": "SCF.solve_secular_problem!",
+    "category": "function",
+    "text": "solve_secular_problem!(H, c, fock)\n\nForm the energy matrix, store it in H, and then solve the secular problem Hc = Ec for the lowest eigenvalue.\n\n\n\n\n\n"
+},
+
+{
     "location": "self_consistent_iteration/#Self-Consistent-Iteration-1",
     "page": "Self-Consistent Iteration",
     "title": "Self-Consistent Iteration",
     "category": "section",
-    "text": "CurrentModule = SCFscf!\nscf_iteration!"
+    "text": "CurrentModule = SCFscf!\nscf_iteration!\nsolve_secular_problem!"
 },
 
 {
