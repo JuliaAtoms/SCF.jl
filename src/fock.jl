@@ -2,10 +2,10 @@
     Fock(quantum_system, equations)
 
 A Fock operator consists of a `quantum_system`, from which `equations`
-are variationally derived. `equations` must be iterable, where each
+are variationally derived. `equations` must provide an overlaod
+for [`energy_matrix!`](@ref). `equations` must be iterable, where each
 element corresponds to the equation for one orbital, and must provide
-overloads for the functions [`energy`](@ref),
-[`energy_matrix!`](@ref), and [`hamiltonian`](@ref).  Additionally,
+an overload for [`hamiltonian`](@ref).  Additionally,
 [`update!`](@ref) must be provided for `equations`, to prepare the
 equation system for the next iteration.
 """
@@ -31,45 +31,23 @@ Base.view(::Fock{Q}, args...) where Q =
     throw(ArgumentError("`view` not implemented for `Fock{$Q}`"))
 
 """
-    energy(equation::Equation)
+    energy_matrix!(H::AbstractMatrix, equations)
 
-Computes the orbital energy of `equation`. _To be overloaded by the
-user._
+Calculates the total energy matrix of the system of `equations`. This
+overwrites the entries of `H`. _To be overloaded by the user._
 """
-energy(::Equation) where Equation =
-    throw(ArgumentError("`energy` not implemented for `$Equation`"))
-"""
-    energy(fock::Fock)
-
-Calculates the total energy of the system by summing the orbital energies.
-"""
-energy(fock::Fock) = sum(energy(eq) for eq in fock.equations)
-
-"""
-    energy_matrix!(H::AbstractMatrix, equation::Equation)
-
-Assemble the energy matrix for `equation`, i.e. the matrix where the
-elements are the energies corresponding to the mixing of
-configurations, basically the Hamiltonian matrix of the corresponding
-orbital. This matrix, sandwiched between the mixing coefficients,
-gives the orbital energy. _To be overloaded by the user._ NB the
-matrix elements should be added to, i.e. *not overwritten*, rather,
-the overload of `energy_matrix!` should compute (the equivalent of) `H
-+= H_i`, where `H_i` is the energy matrix for `equation`.
-"""
-energy_matrix!(H::AbstractMatrix,::Equation) where Equation =
-    throw(ArgumentError("`energy_matrix!` not implemented for `$Equation`"))
+energy_matrix!(H::HM, equations::E) where {HM<:AbstractMatrix,E} =
+    throw(ArgumentError("`energy_matrix!` not implemented for $E"))
 
 """
     energy_matrix!(H::AbstractMatrix, fock::Fock)
 
-Calculates the total energy matrix of the system by summing the energy
-matrices of the different orbital equations of `fock`. This overwrites
-the entries of `H`.
+Calculates the total energy matrix of the quantum system of
+`fock`. This overwrites the entries of `H`.
 """
-function energy_matrix!(H::HM,fock::F) where {HM<:AbstractMatrix,F<:Fock}
+function energy_matrix!(H::HM, fock::F) where {HM<:AbstractMatrix,F<:Fock}
     H .= zero(eltype(H))
-    foreach(eq -> energy_matrix!(H, eq), fock.equations)
+    energy_matrix!(H, fock.equations)
     H
 end
 

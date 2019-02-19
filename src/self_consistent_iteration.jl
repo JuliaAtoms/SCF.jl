@@ -123,12 +123,8 @@ function scf!(fun!::Function, fock::Fock{Q};
         println()
     end
 
-    # Trivial sanity check to see if both modes of calculating total
-    # energy agree. Difficult to mess this up.
-    E₁ = energy(fock)
-    E₂ = c'H*c
-    isapprox(E₁, E₂) ||
-        @warn "Energy calculated as sum of orbital energies $(E₁) Ha does not agree with c'H*c = $(E₂) Ha"
+    # Prepare all orbital integrals before the first iteration.
+    update!(fock.equations; verbosity=max(0,verbosity-4))
 
     for i = 1:max_iter
         scf_iteration!(fock, P̃, H, c̃;
@@ -172,7 +168,7 @@ function scf!(fun!::Function, fock::Fock{Q};
         ω = clamp(ω, 0.0, ωmax)
 
         isnothing(relaxation) || (relaxation.ω = ω)
-        isnothing(eng) || (eng.E = energy(fock))
+        isnothing(eng) || (eng.E = c'H*c)
         SolverTraces.next!(trace)
 
         if aΔ < tol
@@ -212,7 +208,6 @@ function scf_iteration!(fock::Fock{Q,E}, P::M, H::HM, c::V;
                         update_mixing_coefficients=true) where {Q,E,M<:AbstractVecOrMat,
                                                                 HM<:AbstractMatrix,V<:AbstractVector}
     verbosity > 0 && println("Improving orbitals using $(method)")
-    update!(fock.equations; verbosity=max(0,verbosity-2))
 
     for (j,eq) in enumerate(fock.equations)
         h = hamiltonian(eq)
@@ -250,6 +245,11 @@ function scf_iteration!(fock::Fock{Q,E}, P::M, H::HM, c::V;
             end
         end
     end
+
+    # energy_matrix! requires fresh integrals to be calculated
+    # correctly, hence we update the integrals after improving the
+    # orbitals.
+    update!(fock.equations; verbosity=max(0,verbosity-2))
 
     update_mixing_coefficients &&
         solve_secular_problem!(H, c, fock, tol=tol)
