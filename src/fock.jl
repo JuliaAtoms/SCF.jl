@@ -89,7 +89,7 @@ Update the equation system `eqs` for the current iteration. _To be
 overloaded by the user._
 """
 update!(eqs; kwargs...) =
-    throw(ArgumentError("`update!` not implemented for $(typeof(eq))"))
+    throw(ArgumentError("`update!` not implemented for $(typeof(eqs))"))
 
 """
     rotate_max_lobe!(v)
