@@ -53,7 +53,7 @@ function scf!(fun!::Function, fock::Fock{Q};
               ω=0, monotonous_window=10, ωfactor=0.9, ωmax=0.999,
               verbosity=1, num_printouts=min(max_iter,10),
               kwargs...) where Q
-    trace,tolerance,relaxation,eng = if verbosity > 1
+    trace,tolerance,relaxation,eng,virial = if verbosity > 1
         trace = SolverTrace(max_iter,
                             CurrentStep(max_iter,
                                         lc=LinearColorant(max_iter,1,SolverTraces.red_green_scale()),
@@ -72,11 +72,15 @@ function scf!(fun!::Function, fock::Fock{Q};
             nothing
         end
 
-        eng = EnergyColumn(0.0)
-        push!(trace, eng)
-        trace,tolerance,relaxation,eng
+        eng = EnergyColumn(0.0),EnergyColumn(0.0,false,"T̂"),EnergyColumn(0.0,false, "V̂")
+        foreach(e -> push!(trace, e), eng)
+
+        virial = VirialColumn(-2.0)
+        push!(trace, virial)
+
+        trace,tolerance,relaxation,eng,virial
     else
-        nothing,nothing,nothing,nothing
+        nothing,nothing,nothing,nothing,nothing
     end
 
     # Views of the orbitals and mixing coefficients in the fock object.
@@ -168,7 +172,16 @@ function scf!(fun!::Function, fock::Fock{Q};
         ω = clamp(ω, 0.0, ωmax)
 
         isnothing(relaxation) || (relaxation.ω = ω)
-        isnothing(eng) || (eng.E = c'H*c)
+        if !isnothing(eng)
+            Etot = c'H*c
+            energy_matrix!(H, fock, :kinetic)
+            ET = c'H*c
+            EV = Etot-ET
+            eng[1].E = Etot
+            eng[2].E = ET
+            eng[3].E = EV
+            virial.V = EV/ET
+        end
         SolverTraces.next!(trace)
 
         if aΔ < tol

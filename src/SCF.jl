@@ -9,6 +9,7 @@ import SolverTraces: base_exp
 
 using UnicodeFun
 using Formatting
+using Crayons
 
 if VERSION < v"1.1-DEV"
     isnothing(::Nothing) = true
