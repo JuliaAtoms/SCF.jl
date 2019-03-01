@@ -89,62 +89,6 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "fock_operators/#SCF.Fock",
-    "page": "Fock Operators",
-    "title": "SCF.Fock",
-    "category": "type",
-    "text": "Fock(quantum_system, equations)\n\nA Fock operator consists of a quantum_system, from which equations are variationally derived. equations must be iterable, where each element corresponds to the equation for one orbital, and must provide overloads for the functions energy, energy_matrix!, and hamiltonian.  Additionally, update! must be provided for equations, to prepare the equation system for the next iteration.\n\n\n\n\n\n"
-},
-
-{
-    "location": "fock_operators/#SCF.norm_rot!",
-    "page": "Fock Operators",
-    "title": "SCF.norm_rot!",
-    "category": "function",
-    "text": "norm_rot!(fock, v)\n\nNormalize and rotate the eigenvector v such that the largest lobe has positive sign.\n\n\n\n\n\n"
-},
-
-{
-    "location": "fock_operators/#SCF.rotate_max_lobe!",
-    "page": "Fock Operators",
-    "title": "SCF.rotate_max_lobe!",
-    "category": "function",
-    "text": "rotate_max_lobe!(v)\n\nRotate the vector v such that the largest lobe has positive sign.\n\n\n\n\n\n"
-},
-
-{
-    "location": "fock_operators/#SCF.energy",
-    "page": "Fock Operators",
-    "title": "SCF.energy",
-    "category": "function",
-    "text": "energy(equation::Equation)\n\nComputes the orbital energy of equation. To be overloaded by the user.\n\n\n\n\n\nenergy(fock::Fock)\n\nCalculates the total energy of the system by summing the orbital energies.\n\n\n\n\n\n"
-},
-
-{
-    "location": "fock_operators/#SCF.energy_matrix!",
-    "page": "Fock Operators",
-    "title": "SCF.energy_matrix!",
-    "category": "function",
-    "text": "energy_matrix!(H::AbstractMatrix, equation::Equation)\n\nAssemble the energy matrix for equation, i.e. the matrix where the elements are the energies corresponding to the mixing of configurations, basically the Hamiltonian matrix of the corresponding orbital. This matrix, sandwiched between the mixing coefficients, gives the orbital energy. To be overloaded by the user. NB the matrix elements should be added to, i.e. not overwritten, rather, the overload of energy_matrix! should compute (the equivalent of) H += H_i, where H_i is the energy matrix for equation.\n\n\n\n\n\nenergy_matrix!(H::AbstractMatrix, fock::Fock)\n\nCalculates the total energy matrix of the system by summing the energy matrices of the different orbital equations of fock. This overwrites the entries of H.\n\n\n\n\n\n"
-},
-
-{
-    "location": "fock_operators/#SCF.hamiltonian",
-    "page": "Fock Operators",
-    "title": "SCF.hamiltonian",
-    "category": "function",
-    "text": "hamiltonian(equation::Equation)\n\nReturns the orbital Hamiltonian of equation. To be overloaded by the user.\n\n\n\n\n\n"
-},
-
-{
-    "location": "fock_operators/#SCF.update!",
-    "page": "Fock Operators",
-    "title": "SCF.update!",
-    "category": "function",
-    "text": "update!(eqs; kwargs...)\n\nUpdate the equation system eqs for the current iteration. To be overloaded by the user.\n\n\n\n\n\n"
-},
-
-{
     "location": "fock_operators/#Fock-Operators-1",
     "page": "Fock Operators",
     "title": "Fock Operators",
