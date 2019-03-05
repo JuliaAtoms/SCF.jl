@@ -53,35 +53,8 @@ function scf!(fun!::Function, fock::Fock{Q};
               ω=0, monotonous_window=10, ωfactor=0.9, ωmax=0.999,
               verbosity=1, num_printouts=min(max_iter,10),
               kwargs...) where Q
-    trace,tolerance,relaxation,eng,virial = if verbosity > 1
-        trace = SolverTrace(max_iter,
-                            CurrentStep(max_iter,
-                                        lc=LinearColorant(max_iter,1,SolverTraces.red_green_scale()),
-                                        header="Iteration"),
-                            progress_meter=false,
-                            num_printouts=num_printouts)
-
-        tolerance = Tolerance(tol, print_target=false)
-        push!(trace, tolerance)
-
-        relaxation = if !iszero(ω)
-            r = RelaxationColumn(ω)
-            push!(trace, r)
-            r
-        else
-            nothing
-        end
-
-        eng = EnergyColumn(0.0),EnergyColumn(0.0,false,"T̂"),EnergyColumn(0.0,false, "V̂")
-        foreach(e -> push!(trace, e), eng)
-
-        virial = VirialColumn(-2.0)
-        push!(trace, virial)
-
-        trace,tolerance,relaxation,eng,virial
-    else
-        nothing,nothing,nothing,nothing,nothing
-    end
+    trace,tolerance,relaxation,eng,virial =
+        setup_solver_trace(verbosity, max_iter, tol, ω, num_printouts)
 
     # Views of the orbitals and mixing coefficients in the fock object.
     P = orbitals(fock.quantum_system)

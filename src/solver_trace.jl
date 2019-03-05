@@ -1,4 +1,5 @@
-# * Energy
+# * Solver trace columns
+# ** Energy
 
 mutable struct EnergyColumn{T<:AbstractFloat} <: TraceColumn
     E::T
@@ -20,7 +21,7 @@ end
 (e::EnergyColumn)(::Integer) =
     e.eV ? (e.E,27.211e.E) : (e.E,)
 
-# * Virial theorem
+# ** Virial theorem
 
 mutable struct VirialColumn{T<:AbstractFloat} <: TraceColumn
     V::T
@@ -33,7 +34,7 @@ function VirialColumn(V::T) where T
     fmt = FormatExpr("{1:.5f} ({2:s}{3:.2f}×10{4:3s}$(crayon"reset"))")
     lc = LinearColorant(one(T),zero(T),SolverTraces.red_green_scale())
     VirialColumn(V, fmt, lc,
-                 rpad("V/T     V/T + 2", 1+length(format(fmt, V, "", base_exp(abs(V + 2.0))...))))
+                 rpad("⟨V̂⟩/⟨T̂⟩ ⟨V̂⟩/⟨T̂⟩ + 2", 1+length(format(fmt, V, "", base_exp(abs(V + 2.0))...))))
 end
 
 function (v::VirialColumn{T})(::Integer) where T
@@ -42,7 +43,7 @@ function (v::VirialColumn{T})(::Integer) where T
      Vb,to_superscript(Ve))
 end
 
-# * Relaxation
+# ** Relaxation
 
 mutable struct RelaxationColumn{T<:AbstractFloat} <: TraceColumn
     ω::T
@@ -60,4 +61,31 @@ end
 function (r::RelaxationColumn{T})(::Integer) where T
     ωb,ωe = base_exp(abs(1.0 - r.ω))
     (ωb,to_superscript(ωe))
+end
+
+# * Setup solver trace
+function setup_solver_trace(verbosity, max_iter, tol, ω, num_printouts)
+    if verbosity > 1
+        trace = SolverTrace(max_iter,
+                            CurrentStep(max_iter,
+                                        lc=LinearColorant(max_iter,1,SolverTraces.red_green_scale()),
+                                        header="Iteration"),
+                            progress_meter=false,
+                            num_printouts=num_printouts)
+
+        tolerance = Tolerance(tol, print_target=false)
+        push!(trace, tolerance)
+
+        relaxation = !iszero(ω) ? last(push!(trace, RelaxationColumn(ω))) : nothing
+
+        eng = EnergyColumn(0.0),EnergyColumn(0.0,false,"⟨T̂⟩"),EnergyColumn(0.0,false, "⟨V̂⟩")
+        foreach(e -> push!(trace, e), eng)
+
+        virial = VirialColumn(-2.0)
+        push!(trace, virial)
+
+        trace,tolerance,relaxation,eng,virial
+    else
+        nothing,nothing,nothing,nothing,nothing
+    end
 end
