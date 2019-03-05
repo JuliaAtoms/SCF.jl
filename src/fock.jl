@@ -2,12 +2,12 @@
     Fock(quantum_system, equations)
 
 A Fock operator consists of a `quantum_system`, from which `equations`
-are variationally derived. `equations` must provide an overlaod
-for [`energy_matrix!`](@ref). `equations` must be iterable, where each
+are variationally derived. `equations` must provide an overload for
+[`energy_matrix!`](@ref). `equations` must be iterable, where each
 element corresponds to the equation for one orbital, and must provide
-an overload for [`hamiltonian`](@ref).  Additionally,
-[`update!`](@ref) must be provided for `equations`, to prepare the
-equation system for the next iteration.
+an overload for [`hamiltonian`](@ref) and
+[`energy`](@ref). Additionally, [`update!`](@ref) must be provided for
+`equations`, to prepare the equation system for the next iteration.
 """
 mutable struct Fock{Q<:AbstractQuantumSystem,Equations}
     quantum_system::Q
@@ -60,6 +60,15 @@ user._
 """
 hamiltonian(equation::Equation) where Equation =
     throw(ArgumentError("`hamiltonian` not implemented for `$Equation`"))
+
+"""
+    energy(equation::Equation[, term=:total])
+
+Returns the orbital energy for the orbital governed by `equation`. _To
+be overloaded by the user._
+"""
+energy(equation::Equation, which::Symbol=:total) where Equation =
+    throw(ArgumentError("`energy` not implemented for `$Equation`"))
 
 """
     update!(eqs; kwargs...)

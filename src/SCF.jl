@@ -26,6 +26,7 @@ include("utils.jl")
 include("secular_problem.jl")
 include("gershgorin_discs.jl")
 include("shift_invert.jl")
+include("solve_orbital_equation.jl")
 include("self_consistent_iteration.jl")
 
 export Fock, scf!

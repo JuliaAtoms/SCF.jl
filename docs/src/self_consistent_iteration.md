@@ -7,6 +7,7 @@ CurrentModule = SCF
 ```@docs
 scf!
 scf_iteration!
+solve_orbital_equation!
 solve_secular_problem!
 ```
 
@@ -32,8 +33,8 @@ LinearAlgebra.mul!(y::V₁, A::KrylovWrapper{T,Hamiltonian}, x::V₂) where {V�
 
 ## Shift-and-invert
 
-To improve the rate of convergence of the Krylov iteration, instead of
-computing the eigenvectors of $\Hamiltonian$ when improving the
+To improve the rate of convergence of the Krylov iterations, instead
+of computing the eigenvectors of $\Hamiltonian$ when improving the
 orbitals, we can use the shift-and-invert strategy and instead iterate
 $(\Hamiltonian-\sigma I)^{-1}$ with a shift $\sigma$ that is located
 slightly below the target eigenvalue. The eigenvectors are shared
@@ -49,7 +50,11 @@ factorizable. However, we can compute the action of
 $(\Hamiltonian-\sigma I)^{-1}$ using an [iterative
 solver](https://github.com/JuliaMath/IterativeSolvers.jl) with a
 preconditioner constructed from all terms of $\Hamiltonian$ except the
-integral operators.
+integral operators (exchange interaction) and the source terms
+(configuration interaction). As mentioned in the documentation for
+[`solve_orbital_equation!`](@ref), the orbital Hamiltonian must
+support [`KrylovWrapper`](@ref) as well as providing an overload for
+[`MatrixFactorizations.preconditioner`](https://github.com/jagot/MatrixFactorizations.jl).
 
 ```@docs
 ShiftInvert

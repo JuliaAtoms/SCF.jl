@@ -175,7 +175,7 @@ scf!(fock::Fock{Q}; kwargs...) where Q =
 
 
 """
-    scf_iteration!(fock, P, c[; verbosity=0, method=:arnoldi, tol=1e-10,
+    scf_iteration!(fock, P, c[; verbosity=0, method=:arnoldi, σ=nothing, tol=1e-10,
                    update_mixing_coefficients=true])
 
 Perform one step of the SCF iteration. This will
@@ -191,44 +191,28 @@ Perform one step of the SCF iteration. This will
 function scf_iteration!(fock::Fock{Q,E}, P::M, H::HM, c::V;
                         verbosity=0, method=:arnoldi,
                         tol=1e-10,
-                        update_mixing_coefficients=true) where {Q,E,M<:AbstractVecOrMat,
-                                                                HM<:AbstractMatrix,V<:AbstractVector}
+                        update_mixing_coefficients=true,
+                        kwargs...) where {Q,E,M<:AbstractVecOrMat,
+                                          HM<:AbstractMatrix,V<:AbstractVector}
     verbosity > 0 && println("Improving orbitals using $(method)")
 
     for (j,eq) in enumerate(fock.equations)
-        h = hamiltonian(eq)
         print_block() do io
             verbosity > 1 && println(io, eq)
 
             vPj = view(P,:,j)
 
-            if method==:arnoldi
-                # It would be preferrable if the Arnoldi state could
-                # be preserved between iterations, pending
-                # https://github.com/haampie/ArnoldiMethod.jl/issues/91
-                schur,history = partialschur(KrylovWrapper(h),
-                                             nev=1, tol=tol, which=SR())
-                copyto!(vPj, schur.Q[:,1])
-                #= elseif method==:arnoldi_shift_invert
-                # If we figure out a method of factorizing the HF
-                # Hamiltonian at not a too large cost, we could use
-                # the shift-and-invert trick here as well, using the
-                # "hydrogenic" (i.e. without repulsion integrals)
-                # energy as a lower bound.
-                =#
-            else
-                throw(ArgumentError("Unknown diagonalization method $(method)"))
-            end
+            solve_orbital_equation!(vPj, eq, method, tol;
+                                    io=io, verbosity=verbosity,
+                                    kwargs...)
 
             # Normalize eigenvector and rotate it such that the
             # largest lobe is positive.
             norm_rot!(fock, vPj)
 
-            if verbosity > 2
-                println(io, "Orbital improvement: ", history)
+            verbosity > 2 &&
                 println(io, "Change in equation $j: ",
                         norm(vPj - eq.ϕ.mul.factors[2]))
-            end
         end
     end
 
