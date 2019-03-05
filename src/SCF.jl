@@ -3,6 +3,8 @@ module SCF
 using LinearAlgebra
 using ArnoldiMethod
 using SparseArrays
+using IntervalSets
+using MatrixFactorizations
 
 using SolverTraces
 import SolverTraces: base_exp
@@ -22,6 +24,8 @@ include("fock.jl")
 include("solver_trace.jl")
 include("utils.jl")
 include("secular_problem.jl")
+include("gershgorin_discs.jl")
+include("shift_invert.jl")
 include("self_consistent_iteration.jl")
 
 export Fock, scf!

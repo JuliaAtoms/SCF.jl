@@ -41,6 +41,7 @@ jobs:
       os: linux
       script:
         - julia --project=docs/ -e 'using Pkg; pkg"add https://github.com/jagot/SolverTraces.jl.git";'
+        - julia --project=docs/ -e 'using Pkg; pkg"add https://github.com/jagot/MatrixFactorizations.jl.git";'
         - julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd()));
                                                Pkg.instantiate()'
         - julia --project=docs/ docs/make.jl
