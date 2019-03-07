@@ -51,6 +51,7 @@ equals `max_iter` or the change in the coefficients is below `tol`.
 function scf!(fun!::Function, fock::Fock{Q};
               max_iter=200, tol=1e-8,
               ω=0, monotonous_window=10, ωfactor=0.9, ωmax=0.999,
+              double_counted_total_energy=false,
               verbosity=1, num_printouts=min(max_iter,10),
               kwargs...) where Q
     trace,tolerance,relaxation,eng,virial =
@@ -90,6 +91,10 @@ function scf!(fun!::Function, fock::Fock{Q};
     # Energy matrix
     H = spzeros(nc, nc)
     solve_secular_problem!(H, c, fock)
+    # Energy matrix for double-counted terms
+    Hd = spzeros(nc, nc)
+    # Kinetic energy matrix
+    T = spzeros(nc, nc)
 
     if verbosity > 2
         println("Initial energy matrix")
@@ -146,9 +151,14 @@ function scf!(fun!::Function, fock::Fock{Q};
 
         isnothing(relaxation) || (relaxation.ω = ω)
         if !isnothing(eng)
-            Etot = c'H*c
-            energy_matrix!(H, fock, :kinetic)
-            ET = c'H*c
+            Etot = if double_counted_total_energy
+                energy_matrix!(Hd, fock, :double_counted_energy)
+                sum(energy.(fock.equations)) - c'Hd*c
+            else
+                c'H*c
+            end
+            energy_matrix!(T, fock, :kinetic_energy)
+            ET = c'T*c
             EV = Etot-ET
             eng[1].E = Etot
             eng[2].E = ET

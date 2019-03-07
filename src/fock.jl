@@ -31,22 +31,23 @@ Base.view(::Fock{Q}, args...) where Q =
     throw(ArgumentError("`view` not implemented for `Fock{$Q}`"))
 
 """
-    energy_matrix!(H::AbstractMatrix, equations[, which=:total])
+    energy_matrix!(H::AbstractMatrix, equations[, which=:total_energy])
 
 Calculates the energy matrix of the system of `equations`. This
 overwrites the entries of `H`. _To be overloaded by the user; must
-support `which=:total` and `which=:kinetic`._
+support `which=:total_energy`, `which=:double_counted_energy`, and
+`which=:kinetic_energy`._
 """
-energy_matrix!(H::HM, equations::E, which::Symbol=:total) where {HM<:AbstractMatrix,E} =
+energy_matrix!(H::HM, equations::E, which::Symbol=:total_energy) where {HM<:AbstractMatrix,E} =
     throw(ArgumentError("`energy_matrix!` not implemented for $E"))
 
 """
-    energy_matrix!(H::AbstractMatrix, fock::Fock[, which=:total])
+    energy_matrix!(H::AbstractMatrix, fock::Fock[, which=:total_energy])
 
 Calculates the energy matrix of the quantum system of `fock`. This
 overwrites the entries of `H`.
 """
-function energy_matrix!(H::HM, fock::F, which::Symbol=:total) where {HM<:AbstractMatrix,F<:Fock}
+function energy_matrix!(H::HM, fock::F, which::Symbol=:total_energy) where {HM<:AbstractMatrix,F<:Fock}
     H .= zero(eltype(H))
     energy_matrix!(H, fock.equations, which)
     H
@@ -62,12 +63,12 @@ hamiltonian(equation::Equation) where Equation =
     throw(ArgumentError("`hamiltonian` not implemented for `$Equation`"))
 
 """
-    energy(equation::Equation[, term=:total])
+    energy(equation::Equation[, term=:total_energy])
 
 Returns the orbital energy for the orbital governed by `equation`. _To
 be overloaded by the user._
 """
-energy(equation::Equation, which::Symbol=:total) where Equation =
+energy(equation::Equation, which::Symbol=:total_energy) where Equation =
     throw(ArgumentError("`energy` not implemented for `$Equation`"))
 
 """
