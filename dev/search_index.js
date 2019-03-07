@@ -117,7 +117,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Fock Operators",
     "title": "SCF.energy_matrix!",
     "category": "function",
-    "text": "energy_matrix!(H::AbstractMatrix, equations[, which=:total])\n\nCalculates the energy matrix of the system of equations. This overwrites the entries of H. To be overloaded by the user; must support which=:total and which=:kinetic.\n\n\n\n\n\nenergy_matrix!(H::AbstractMatrix, fock::Fock[, which=:total])\n\nCalculates the energy matrix of the quantum system of fock. This overwrites the entries of H.\n\n\n\n\n\n"
+    "text": "energy_matrix!(H::AbstractMatrix, equations[, which=:total_energy])\n\nCalculates the energy matrix of the system of equations. This overwrites the entries of H. To be overloaded by the user; must support `which=:totalenergy,which=:doublecountedenergy, andwhich=:kineticenergy`.\n\n\n\n\n\nenergy_matrix!(H::AbstractMatrix, fock::Fock[, which=:total_energy])\n\nCalculates the energy matrix of the quantum system of fock. This overwrites the entries of H.\n\n\n\n\n\n"
 },
 
 {
