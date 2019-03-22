@@ -222,7 +222,7 @@ function scf_iteration!(fock::Fock{Q,E}, P::M, H::HM, c::V;
 
             verbosity > 2 &&
                 println(io, "Change in equation $j: ",
-                        norm(vPj - eq.ϕ.mul.factors[2]))
+                        norm(vPj - eq.ϕ.args[2]))
         end
     end
 
