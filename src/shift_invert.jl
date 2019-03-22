@@ -54,7 +54,7 @@ and store the result in `y` for factorizations based on
 """
 function LinearAlgebra.mul!(y, si::ShiftInvert{<:IterativeFactorization}, x)
     y .= false # Strong zero to get rid of NaNs
-    ldiv!(y, si.A⁻¹, x, verbosity=0)
+    ldiv!(y, si.A⁻¹, x)
 end
 
 export ShiftInvert
