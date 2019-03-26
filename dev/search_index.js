@@ -173,7 +173,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Self-Consistent Iteration",
     "title": "SCF.solve_orbital_equation!",
     "category": "function",
-    "text": "solve_orbital_equation!(Pj, eq, method, tol)\n\nSolve the orbital equation eq and store the result in the radial orbital vector of expansion coefficients Pj. The solution is computed using method; valid choices are\n\n:arnoldi, which requires that hamiltonian(eq) supports KrylovWrapper, and\n:arnoldi_shift_invert, which iterates (H-σ*I)⁻¹ and requires that hamiltonian(eq) supports KrylovWrapper and provides an overload for MatrixFactorizations.preconditioner. The shift is automatically chosen as 1.1ϵ where ϵ is the (current estimate of the) orbital energy of the orbital governed by eq.\n\nBoth methods are controlled by the stopping tolerance tol.\n\n\n\n\n\n"
+    "text": "solve_orbital_equation!(Pj, eq, method, tol)\n\nSolve the orbital equation eq and store the result in the radial orbital vector of expansion coefficients Pj. The solution is computed using method; valid choices are\n\n:arnoldi, which requires that hamiltonian(eq) supports KrylovWrapper, and\n:arnoldi_shift_invert, which iterates (H-σ*I)⁻¹ and requires that hamiltonian(eq) supports KrylovWrapper and provides an overload for IterativeFactorizations.preconditioner. The shift is automatically chosen as 1.1ϵ where ϵ is the (current estimate of the) orbital energy of the orbital governed by eq.\n\nBoth methods are controlled by the stopping tolerance tol.\n\n\n\n\n\n"
 },
 
 {
@@ -249,7 +249,7 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
-    "location": "self_consistent_iteration/#LinearAlgebra.mul!-Tuple{Any,ShiftInvert{#s1,T} where T where #s1<:MatrixFactorizations.IterativeFactorization,Any}",
+    "location": "self_consistent_iteration/#LinearAlgebra.mul!-Tuple{Any,ShiftInvert{#s1,T} where T where #s1<:IterativeFactorizations.IterativeFactorization,Any}",
     "page": "Self-Consistent Iteration",
     "title": "LinearAlgebra.mul!",
     "category": "method",
@@ -261,7 +261,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Self-Consistent Iteration",
     "title": "Shift-and-invert",
     "category": "section",
-    "text": "To improve the rate of convergence of the Krylov iterations, instead of computing the eigenvectors of Hamiltonian when improving the orbitals, we can use the shift-and-invert strategy and instead iterate (Hamiltonian-sigma I)^-1 with a shift sigma that is located slightly below the target eigenvalue. The eigenvectors are shared between Hamiltonian and (Hamiltonian-sigma I)^-1, but convergence towards the low-lying states is faster for (Hamiltonian-sigma I)^-1.This approach is complicated by the fact that the orbital Hamiltonian Hamiltonian is an integro-differential operator, which furthermore depends on the other orbitals through direct, exchange, and configuration interaction, and thus Hamiltonian is not easily factorizable. However, we can compute the action of (Hamiltonian-sigma I)^-1 using an iterative solver with a preconditioner constructed from all terms of Hamiltonian except the integral operators (exchange interaction) and the source terms (configuration interaction). As mentioned in the documentation for solve_orbital_equation!, the orbital Hamiltonian must support KrylovWrapper as well as providing an overload for MatrixFactorizations.preconditioner.ShiftInvert\nShiftInvert(A::M, σ::T=leftendpoint(gershgorin_bounds(A)); factorization=factorize) where {M<:AbstractMatrix, T}\nLinearAlgebra.mul!(y, si::ShiftInvert, x)\nLinearAlgebra.mul!(y, si::ShiftInvert{<:IterativeFactorization}, x)"
+    "text": "To improve the rate of convergence of the Krylov iterations, instead of computing the eigenvectors of Hamiltonian when improving the orbitals, we can use the shift-and-invert strategy and instead iterate (Hamiltonian-sigma I)^-1 with a shift sigma that is located slightly below the target eigenvalue. The eigenvectors are shared between Hamiltonian and (Hamiltonian-sigma I)^-1, but convergence towards the low-lying states is faster for (Hamiltonian-sigma I)^-1.This approach is complicated by the fact that the orbital Hamiltonian Hamiltonian is an integro-differential operator, which furthermore depends on the other orbitals through direct, exchange, and configuration interaction, and thus Hamiltonian is not easily factorizable. However, we can compute the action of (Hamiltonian-sigma I)^-1 using an iterative solver with a preconditioner constructed from all terms of Hamiltonian except the integral operators (exchange interaction) and the source terms (configuration interaction). As mentioned in the documentation for solve_orbital_equation!, the orbital Hamiltonian must support KrylovWrapper as well as providing an overload for IterativeFactorizations.preconditioner.ShiftInvert\nShiftInvert(A::M, σ::T=leftendpoint(gershgorin_bounds(A)); factorization=factorize) where {M<:AbstractMatrix, T}\nLinearAlgebra.mul!(y, si::ShiftInvert, x)\nLinearAlgebra.mul!(y, si::ShiftInvert{<:IterativeFactorization}, x)"
 },
 
 {
