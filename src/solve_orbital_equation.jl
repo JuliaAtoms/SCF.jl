@@ -10,7 +10,7 @@ computed using `method`; valid choices are
 
 2. `:arnoldi_shift_invert`, which iterates `(H-σ*I)⁻¹` and requires
    that `hamiltonian(eq)` supports [`KrylovWrapper`](@ref) *and*
-   provides an overload for `MatrixFactorizations.preconditioner`. The
+   provides an overload for `IterativeFactorizations.preconditioner`. The
    shift is automatically chosen as `1.1ϵ` where `ϵ` is the (current
    estimate of the) orbital energy of the orbital governed by `eq`.
 

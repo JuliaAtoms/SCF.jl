@@ -4,7 +4,7 @@ using LinearAlgebra
 using ArnoldiMethod
 using SparseArrays
 using IntervalSets
-using MatrixFactorizations
+using IterativeFactorizations
 
 using SolverTraces
 import SolverTraces: base_exp

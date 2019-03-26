@@ -54,7 +54,7 @@ integral operators (exchange interaction) and the source terms
 (configuration interaction). As mentioned in the documentation for
 [`solve_orbital_equation!`](@ref), the orbital Hamiltonian must
 support [`KrylovWrapper`](@ref) as well as providing an overload for
-[`MatrixFactorizations.preconditioner`](https://github.com/jagot/MatrixFactorizations.jl).
+[`IterativeFactorizations.preconditioner`](https://github.com/jagot/IterativeFactorizations.jl).
 
 ```@docs
 ShiftInvert
