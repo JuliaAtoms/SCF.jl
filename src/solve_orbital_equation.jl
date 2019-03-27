@@ -14,6 +14,14 @@ computed using `method`; valid choices are
    shift is automatically chosen as `1.1ϵ` where `ϵ` is the (current
    estimate of the) orbital energy of the orbital governed by `eq`.
 
+3. `:lobpcg`, which minimizes `H-σ*I`` and requires that
+   `hamiltonian(eq)` supports [`KrylovWrapper`](@ref) *and* provides
+   an overload for `IterativeFactorizations.preconditioner`. The shift
+   is automatically chosen as `1.1ϵ` where `ϵ` is the (current
+   estimate of the) orbital energy of the orbital governed by `eq`;
+   the shift is not essential for the method to work, but speeds up
+   convergence.
+
 Both methods are controlled by the stopping tolerance `tol`.
 """
 function solve_orbital_equation!(Pj::V, eq::Equation,
@@ -42,6 +50,15 @@ function solve_orbital_equation!(Pj::V, eq::Equation,
         copyto!(Pj, schur.Q[:,1])
 
         verbosity > 2 && println(io,"Orbital improvement: ", history)
+    elseif method==:lobpcg
+        h = hamiltonian(eq)
+        σ = 1.1energy(eq)
+        A = h - σ*I
+        res = lobpcg(KrylovWrapper(A), false, reshape(Pj, :, 1), 1,
+                     P=IterativeFactorizations.preconditioner(A),
+                     tol=tol)
+        verbosity > 2 && show(io, res)
+        copyto!(Pj, res.X[:,1])
     else
         throw(ArgumentError("Unknown diagonalization method $(method)"))
     end

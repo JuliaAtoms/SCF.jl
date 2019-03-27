@@ -4,6 +4,7 @@ using LinearAlgebra
 using ArnoldiMethod
 using SparseArrays
 using IntervalSets
+using IterativeSolvers
 using IterativeFactorizations
 
 using SolverTraces
