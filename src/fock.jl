@@ -101,3 +101,28 @@ function norm_rot!(fock::Fock, v::V) where {V<:AbstractVector}
     normalize!(fock.quantum_system, v)
     rotate_max_lobe!(v)
 end
+
+"""
+    Matrix(fock)
+
+Compute the Fock matrix, where each element corresponds to a matrix
+element between two orbitals.
+"""
+function LinearAlgebra.Matrix(fock::Fock)
+    m = length(fock.equations)
+    F = Matrix{Float64}(undef, m, m)
+
+    orbs = orbitals(fock.quantum_system)
+    tmp = Vector{eltype(orbs)}(undef, size(orbs, 1))
+
+    for (i,eqi) in enumerate(fock.equations)
+        hi = KrylovWrapper(hamiltonian(eqi))
+        orbi = view(orbs, :, i)
+
+        for (j,eqj) in enumerate(fock.equations)
+            mul!(tmp, hi, orbi)
+            F[i,j] = real(dot(view(orbs, :, j), tmp))
+        end
+    end
+    F
+end
