@@ -106,7 +106,7 @@ function scf!(fun!::Function, fock::Fock{Q};
     end
 
     # Prepare all orbital integrals before the first iteration.
-    update!(fock.equations; verbosity=max(0,verbosity-4))
+    update!(fock; verbosity=max(0,verbosity-4))
 
     for i = 1:max_iter
         scf_iteration!(fock, P̃, H, c̃;
@@ -229,7 +229,7 @@ function scf_iteration!(fock::Fock{Q,E}, P::M, H::HM, c::V;
     # energy_matrix! requires fresh integrals to be calculated
     # correctly, hence we update the integrals after improving the
     # orbitals.
-    update!(fock.equations; verbosity=max(0,verbosity-2))
+    update!(fock; verbosity=max(0,verbosity-2))
 
     update_mixing_coefficients &&
         solve_secular_problem!(H, c, fock, tol=tol)

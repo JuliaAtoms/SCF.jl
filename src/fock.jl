@@ -72,13 +72,16 @@ energy(equation::Equation, which::Symbol=:total_energy) where Equation =
     throw(ArgumentError("`energy` not implemented for `$Equation`"))
 
 """
-    update!(eqs; kwargs...)
+    update!(eqs, quantum_system; kwargs...)
 
-Update the equation system `eqs` for the current iteration. _To be
-overloaded by the user._
+Update the equation system `eqs` with respect to `quantum_system`, for
+the current iteration. _To be overloaded by the user._
 """
-update!(eqs; kwargs...) =
-    throw(ArgumentError("`update!` not implemented for $(typeof(eqs))"))
+update!(eqs, quantum_system; kwargs...) =
+    throw(ArgumentError("`update!` not implemented for $(typeof(eqs)), $(typeof(quantum_system))"))
+
+update!(fock::Fock; kwargs...) =
+    update!(fock.equations, fock.quantum_system)
 
 """
     rotate_max_lobe!(v)
