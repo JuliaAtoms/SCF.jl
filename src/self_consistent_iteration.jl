@@ -206,24 +206,19 @@ function scf_iteration!(fock::Fock{Q,E}, P::M, H::HM, c::V;
                                           HM<:AbstractMatrix,V<:AbstractVector}
     verbosity > 0 && println("Improving orbitals using $(method)")
 
-    for (j,eq) in enumerate(fock.equations)
-        print_block() do io
-            verbosity > 1 && println(io, eq)
+    Threads.@threads for j = 1:length(fock.equations)
+        eq = fock.equations.equations[j]
 
-            vPj = view(P,:,j)
+        vPj = view(P,:,j)
 
-            solve_orbital_equation!(vPj, eq, method, tol;
-                                    io=io, verbosity=verbosity,
-                                    kwargs...)
+        solve_orbital_equation!(vPj, eq, method, tol;
+                                # io=io,
+                                verbosity=0,
+                                kwargs...)
 
-            # Normalize eigenvector and rotate it such that the
-            # largest lobe is positive.
-            norm_rot!(fock, vPj)
-
-            verbosity > 2 &&
-                println(io, "Change in equation $j: ",
-                        norm(vPj - eq.ϕ.args[2]))
-        end
+        # Normalize eigenvector and rotate it such that the
+        # largest lobe is positive.
+        norm_rot!(fock, vPj)
     end
 
     # energy_matrix! requires fresh integrals to be calculated
