@@ -27,7 +27,7 @@ methods:
 ```@docs
 Fock
 norm_rot!
-rotate_max_lobe!
+rotate_first_lobe!
 energy_matrix!
 hamiltonian
 update!

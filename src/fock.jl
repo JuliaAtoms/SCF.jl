@@ -92,25 +92,24 @@ update!(eqs, quantum_system; kwargs...) =
 update!(fock::Fock; kwargs...) = update!(fock.equations)
 
 """
-    rotate_max_lobe!(v)
+    rotate_first_lobe!(v)
 
-Rotate the vector `v` such that the largest lobe has positive sign.
+Rotate the vector `v` such that the first lobe has positive sign.
 """
-function rotate_max_lobe!(v::V) where {V<:AbstractVector}
-    i = argmax(abs.(v))
-    lmul!(sign(v[i]), v)
+function rotate_first_lobe!(v::V) where {V<:AbstractVector}
+    lmul!(sign(v[1]), v)
     v
 end
 
 """
     norm_rot!(fock, v)
 
-Normalize and rotate the eigenvector `v` such that the largest
+Normalize and rotate the eigenvector `v` such that the first
 lobe has positive sign.
 """
 function norm_rot!(fock::Fock, v::V) where {V<:AbstractVector}
     normalize!(fock.quantum_system, v)
-    rotate_max_lobe!(v)
+    rotate_first_lobe!(v)
 end
 
 """
