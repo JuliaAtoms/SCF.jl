@@ -1,21 +1,28 @@
 """
-    Fock(quantum_system, equations)
+    Fock(quantum_system, equations, S, symmetries)
 
 A Fock operator consists of a `quantum_system`, from which `equations`
-are variationally derived. `equations` must provide an overload for
+are variationally derived, via an overload of
+`diff(quantum_system)`. `quantum_system` must also provide an overload
+for [`overlap_matrix`](@ref) -> `S`.
+
+`equations` must provide an overload for
 [`energy_matrix!`](@ref). `equations` must be iterable, where each
 element corresponds to the equation for one orbital, and must provide
 an overload for [`hamiltonian`](@ref) and
 [`energy`](@ref). Additionally, [`update!`](@ref) must be provided for
 `equations`, to prepare the equation system for the next iteration.
 """
-mutable struct Fock{Q<:AbstractQuantumSystem,Equations}
+mutable struct Fock{Q<:AbstractQuantumSystem,Equations,Overlap}
     quantum_system::Q
     equations::Equations
+    S::Overlap
+    symmetries::Vector{Vector{Int}}
 end
 
 Fock(quantum_system::Q; kwargs...) where Q =
-    Fock(quantum_system, diff(quantum_system; kwargs...))
+    Fock(quantum_system, diff(quantum_system; kwargs...),
+         overlap_matrix(quantum_system), symmetries(quantum_system))
 
 function Base.show(io::IO, ::MIME"text/plain", fock::Fock{Q,E}) where {Q,E}
     write(io, "Fock operator with\n- quantum system: ")
@@ -29,6 +36,20 @@ end
 
 Base.view(::Fock{Q}, args...) where Q =
     throw(ArgumentError("`view` not implemented for `Fock{$Q}`"))
+
+"""
+    overlap_matrix(quantum_system)
+
+Return the overlap matrix which is a suitable metric for
+`quantum_system`. Usually, this is `Sᵢⱼ = ⟨i|j⟩`, where `i` and `j`
+are basis functions for the orbitals. This is used to calculate
+inner products between orbitals, &c.
+"""
+overlap_matrix(::Q) where Q =
+    throw(ArgumentError("`overlap_matrix` not implemented for `$Q`"))
+
+symmetries(::Q) where Q =
+    throw(ArgumentError("`symmetries` not implemented for `$Q`"))
 
 """
     energy_matrix!(H::AbstractMatrix, equations[, which=:total_energy])

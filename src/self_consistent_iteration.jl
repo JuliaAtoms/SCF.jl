@@ -113,6 +113,7 @@ function scf!(fun!::Function, fock::Fock{Q};
     for i = 1:max_iter
         scf_iteration!(fock, P̃, H, c̃, okws;
                        update_mixing_coefficients=i>1,
+                       rotate_orbitals=i>1,
                        verbosity=verbosity-2, kwargs...)
         fun!(P̃, c̃)
 
@@ -177,6 +178,8 @@ function scf!(fun!::Function, fock::Fock{Q};
     elapsed = time() - t₀
     verbosity > 0 && println("Finished in $(elapsed) seconds")
 
+    analyze_symmetry_orbitals(fock, P, okws, verbosity=verbosity)
+
     norm(ΔP) + norm(Δc) > tol && @warn "Desired tolerance $(tol) not reached in $(max_iter) iterations"
 
     fock
@@ -207,6 +210,7 @@ function scf_iteration!(fock::Fock{Q,E}, P::M, H::HM, c::V,
                         verbosity=0, method=:arnoldi,
                         tol=1e-10,
                         update_mixing_coefficients=true,
+                        rotate_orbitals=true,
                         kwargs...) where {Q,E,M<:AbstractVecOrMat,
                                           HM<:AbstractMatrix,V<:AbstractVector}
     verbosity > 0 && println("Improving orbitals using $(method)")
@@ -222,6 +226,15 @@ function scf_iteration!(fock::Fock{Q,E}, P::M, H::HM, c::V,
         # Normalize eigenvector and rotate it such that the
         # largest lobe is positive.
         norm_rot!(fock, vPj)
+    end
+
+    if rotate_orbitals
+        should_rotate=analyze_symmetry_orbitals(fock, P, okws, verbosity=verbosity)
+        for (i,j) in should_rotate
+            rotate!(P, fock, okws, i, j)
+        end
+        verbosity > 0 &&
+            analyze_symmetry_orbitals(fock, P, okws, verbosity=verbosity)
     end
 
     # energy_matrix! requires fresh integrals to be calculated

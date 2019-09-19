@@ -27,6 +27,7 @@ include("utils.jl")
 include("secular_problem.jl")
 include("gershgorin_discs.jl")
 include("shift_invert.jl")
+include("rotate.jl")
 include("solve_orbital_equation.jl")
 include("self_consistent_iteration.jl")
 
