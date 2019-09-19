@@ -64,7 +64,8 @@ function (r::RelaxationColumn{T})(::Integer) where T
 end
 
 # * Setup solver trace
-function setup_solver_trace(verbosity, max_iter, tol, ω, num_printouts)
+function setup_solver_trace(verbosity, max_iter, tol, ω, num_printouts;
+                            tol_header="Tolerance")
     if verbosity > 1
         trace = SolverTrace(max_iter,
                             CurrentStep(max_iter,
@@ -73,7 +74,7 @@ function setup_solver_trace(verbosity, max_iter, tol, ω, num_printouts)
                             progress_meter=false,
                             num_printouts=num_printouts)
 
-        tolerance = Tolerance(tol, print_target=false)
+        tolerance = Tolerance(tol, tol_header, print_target=false)
         push!(trace, tolerance)
 
         relaxation = !iszero(ω) ? last(push!(trace, RelaxationColumn(ω))) : nothing

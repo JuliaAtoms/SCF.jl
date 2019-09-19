@@ -6,6 +6,7 @@ using SparseArrays
 using IntervalSets
 using IterativeSolvers
 using IterativeFactorizations
+using Optim
 
 using SolverTraces
 import SolverTraces: base_exp
@@ -30,6 +31,8 @@ include("shift_invert.jl")
 include("rotate.jl")
 include("solve_orbital_equation.jl")
 include("self_consistent_iteration.jl")
+include("manifolds.jl")
+include("optim.jl")
 
 export Fock, scf!
 
