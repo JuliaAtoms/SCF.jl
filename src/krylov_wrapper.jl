@@ -40,3 +40,66 @@ LinearAlgebra.mul!(y::V₁, A::KrylovWrapper{T,Hamiltonian}, x::V₂) where {V�
 
 Base.show(io::IO, kw::KrylovWrapper{T}) where T =
     write(io, "KrylovWrapper{$T} of size $(size(kw))")
+
+"""
+    OrthogonalKrylovWrapper(h,A,x′,C,S,tmp)
+
+Proxy object to perform Krylov iterations of the Hamiltonian `h`,
+represented by the [`KrylovWrapper`](@ref) `A`, in the subspace
+orthogonal to `C`. The component of the test vector orthogonal to `C`
+is stored in `x′`, before acting with `A`, and finally orthogonalized
+again, i.e. `y = (1-C*C')*A*(1-C*C')*x = (1-C*C')*A*x′`. `S` is the
+overlap matrix of the basis functions, used to compute the inner
+products.
+"""
+struct OrthogonalKrylovWrapper{H,K<:KrylovWrapper,V,M,SM}
+    h::H
+    A::K
+    x′::V
+    C::M
+    S::SM
+    SC::M
+end
+
+function OrthogonalKrylovWrapper(h, A, nC, S)
+    m = size(A, 1)
+    T = eltype(A)
+    x′ = zeros(T, m)
+    C = zeros(T, m, nC)
+    SC = zeros(T, m, nC)
+    OrthogonalKrylovWrapper(h, A, x′, C, S, SC)
+end
+
+Base.eltype(A::OrthogonalKrylovWrapper) = eltype(A.A)
+Base.size(A::OrthogonalKrylovWrapper) = size(A.A)
+Base.size(A::OrthogonalKrylovWrapper, i) = size(A.A, i)
+
+function orthogonalize!(x′, C, SC, x)
+    for j = 1:size(C,2)
+        c = dot(view(SC, :, j), x)
+        BLAS.axpy!(-c, view(C, :, j), x′)
+    end
+end
+
+function LinearAlgebra.mul!(y, A::OrthogonalKrylovWrapper, x)
+    # We cannot simply project `x` into the subspace orthogonal to
+    # `C`, since `x` is a test vector from e.g. a Krylov iteration,
+    # i.e. it is part of the Krylov space and must not be
+    # modified. Hence, we make our own copy, and project out the
+    # components parallel to `C` from that one instead.
+    copyto!(A.x′, x)
+    # This step is necessary for non-orthogonal bases, since the inner
+    # product is defined as `a'S*b`, where `S=B'B`, which is
+    # non-diagonal for non-orthogonal bases.
+    mul!(A.SC, A.S, A.C)
+
+    # x′ <- (1 - C*C')*x
+    orthogonalize!(A.x′, A.C, A.SC, x)
+    # y <- A*x′
+    mul!(reshape(y, :), A.A, A.x′)
+    # y <- (1 - C*C')*y
+    orthogonalize!(y, A.C, A.SC, y)
+end
+
+Base.show(io::IO, okw::OrthogonalKrylovWrapper) =
+    write(io, "OrthogonalKrylovWrapper of size $(size(okw)), orthogonal against subspace of $(size(okw.C,2)) vectors")

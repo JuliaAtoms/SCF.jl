@@ -1,65 +1,47 @@
 """
-    solve_orbital_equation!(Pj, eq, method, tol)
+    solve_orbital_equation!(Pj, okw, method, tol)
 
-Solve the orbital equation `eq` and store the result in the radial
-orbital vector of expansion coefficients `Pj`. The solution is
-computed using `method`; valid choices are
+Solve the orbital equation for the `j`th orbital, by solving the
+eigenproblem of the [`OrthogonalKrylovWrapper`](@ref) operator `okw`,
+and store the result in the radial orbital vector of expansion
+coefficients `Pj`. The solution is computed using `method`; valid
+choices are
 
-1. `:arnoldi`, which requires that `hamiltonian(eq)` supports
-   [`KrylovWrapper`](@ref), and
+1. `:arnoldi`, which uses ArnoldiMethod.jl. Really small grid
+   spacings/large grid extents can be problematic with this method,
+   due to high condition numbers.
 
-2. `:arnoldi_shift_invert`, which iterates `(H-σ*I)⁻¹` and requires
-   that `hamiltonian(eq)` supports [`KrylovWrapper`](@ref) *and*
-   provides an overload for `IterativeFactorizations.preconditioner`. The
-   shift is automatically chosen as `1.1ϵ` where `ϵ` is the (current
-   estimate of the) orbital energy of the orbital governed by `eq`.
-
-3. `:lobpcg`, which minimizes `H-σ*I`` and requires that
-   `hamiltonian(eq)` supports [`KrylovWrapper`](@ref) *and* provides
-   an overload for `IterativeFactorizations.preconditioner`. The shift
-   is automatically chosen as `1.1ϵ` where `ϵ` is the (current
-   estimate of the) orbital energy of the orbital governed by `eq`;
-   the shift is not essential for the method to work, but speeds up
-   convergence.
+2. `:lobpcg`, which uses IterativeSolvers.jl. Too coarse grids can
+   cause never-ending loops or errors from the Cholesky decomposition,
+   complaining about non-positive definite subproblems.
 
 Both methods are controlled by the stopping tolerance `tol`.
 """
-function solve_orbital_equation!(Pj::V, eq::Equation,
-                                 method::Symbol, tol;
+function solve_orbital_equation!(Pj, okw, method, tol;
                                  facttol=√(eps(real(eltype(Pj)))),
-                                 io=stdout, verbosity=0,
-                                 kwargs...) where {V<:AbstractVector,Equation}
-    if method == :arnoldi || method == :arnoldi_shift_invert
-        h = hamiltonian(eq)
+                                 io=stdout, verbosity=0)
+    verbosity > 0 && println(io, "Improving orbital using $method")
 
-        schur,history = if method == :arnoldi
-            # It would be preferrable if the Arnoldi state could
-            # be preserved between iterations, pending
-            # https://github.com/haampie/ArnoldiMethod.jl/issues/91
-            partialschur(KrylovWrapper(h), nev=1, tol=tol, which=SR())
-        elseif method==:arnoldi_shift_invert
-            σ = 1.1energy(eq)
-            verbosity > 3 && println(io, "Shift = orbital energy of $(eq.orbital) = $(σ) Ha")
-            # This is a fantastic waste of memory
-            partialschur(ShiftInvert(factorization(KrylovWrapper(h - σ*I);
-                                                   tol=facttol,
-                                                   isposdefA=true,
-                                                   kwargs...), σ),
-                         nev=1, tol=tol, which=LR())
-        end
-        copyto!(Pj, schur.Q[:,1])
+    update!(okw)
 
+    ϕ = if method == :arnoldi
+        # It would be preferrable if the Arnoldi state could
+        # be preserved between iterations, pending
+        # https://github.com/haampie/ArnoldiMethod.jl/issues/91
+        schur,history = partialschur(okw, nev=1, tol=tol, which=SR())
         verbosity > 2 && println(io,"Orbital improvement: ", history)
+
+        view(schur.Q, :, 1)
     elseif method==:lobpcg
-        h = hamiltonian(eq)
-        σ = 1.1energy(eq)
-        A = h - σ*I
-        res = lobpcg(KrylovWrapper(A), false, reshape(Pj, :, 1), 1,
-                     P=IterativeFactorizations.preconditioner(A),
-                     tol=tol)
+        res = lobpcg(okw, okw.S, false, reshape(Pj, :, 1), 1,
+                     # P=IterativeFactorizations.preconditioner(A),
+                     tol=tol, C=okw.C)
         verbosity > 2 && show(io, res)
-        copyto!(Pj, res.X[:,1])
+
+        view(res.X, :, 1)
     else
         throw(ArgumentError("Unknown diagonalization method $(method)"))
     end
+
+    copyto!(Pj, ϕ)
 end

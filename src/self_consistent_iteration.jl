@@ -107,9 +107,11 @@ function scf!(fun!::Function, fock::Fock{Q};
 
     # Prepare all orbital integrals before the first iteration.
     update!(fock; verbosity=max(0,verbosity-4))
+    okws = [OrthogonalKrylovWrapper(hamiltonian(eq))
+            for eq in fock.equations]
 
     for i = 1:max_iter
-        scf_iteration!(fock, P̃, H, c̃;
+        scf_iteration!(fock, P̃, H, c̃, okws;
                        update_mixing_coefficients=i>1,
                        verbosity=verbosity-2, kwargs...)
         fun!(P̃, c̃)
@@ -180,13 +182,13 @@ function scf!(fun!::Function, fock::Fock{Q};
     fock
 end
 
-scf!(fock::Fock{Q}; kwargs...) where Q =
-    scf!((_,_)->nothing, fock; kwargs...)
-
+scf!(fock::Fock{Q}, args...; kwargs...) where Q =
+    scf!((_,_)->nothing, fock, args...; kwargs...)
 
 """
-    scf_iteration!(fock, P, c[; verbosity=0, method=:arnoldi, σ=nothing, tol=1e-10,
-                   update_mixing_coefficients=true])
+    scf_iteration!(fock, P, H, c, okws,
+                   [; verbosity=0, method=:arnoldi, σ=nothing, tol=1e-10,
+                    update_mixing_coefficients=true])
 
 Perform one step of the SCF iteration. This will
 
@@ -197,8 +199,11 @@ Perform one step of the SCF iteration. This will
 2) Solve the secular problem to find new values for the mixing
    coefficients, `c`, unless `update_mixing_coefficients==false`.
 
+`okws` is a vector of [`OrthogonalKrylovWrapper`](@ref)s, one for each
+orbital.
 """
-function scf_iteration!(fock::Fock{Q,E}, P::M, H::HM, c::V;
+function scf_iteration!(fock::Fock{Q,E}, P::M, H::HM, c::V,
+                        okws;
                         verbosity=0, method=:arnoldi,
                         tol=1e-10,
                         update_mixing_coefficients=true,
@@ -207,11 +212,9 @@ function scf_iteration!(fock::Fock{Q,E}, P::M, H::HM, c::V;
     verbosity > 0 && println("Improving orbitals using $(method)")
 
     Threads.@threads for j = 1:length(fock.equations)
-        eq = fock.equations.equations[j]
-
         vPj = view(P,:,j)
 
-        solve_orbital_equation!(vPj, eq, method, tol;
+        solve_orbital_equation!(vPj, okws[j], method, tol;
                                 # io=io,
                                 verbosity=0,
                                 kwargs...)
