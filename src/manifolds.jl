@@ -1,12 +1,9 @@
 import Optim: retract!, project_tangent!
 
 # * Sphere
-metric_dot(a, b, ::UniformScaling{Bool}) = dot(a,b)
-metric_dot(a, b, g::UniformScaling) = dot(a,b)*g.λ
-metric_dot(a, b, g) = dot(a,g*b)
 
 metric_norm(x, g::UniformScaling) = norm(x)*√(g.λ)
-metric_norm(x, g) = √(metric_dot(x,x,g))
+metric_norm(x, g) = √(dot(x,g,x))
 
 metric_normalize!(x, ::UniformScaling{Bool}) = normalize!(x)
 function metric_normalize!(x, g)
@@ -20,7 +17,7 @@ struct MetricSphere{M} <: Manifold
 end
 MetricSphere() = MetricSphere(I)
 Optim.retract!(S::MetricSphere, x) = metric_normalize!(x, S.g)
-Optim.project_tangent!(S::MetricSphere,g,x) = (g .-= real(metric_dot(x, g, S.g)).*x)
+Optim.project_tangent!(S::MetricSphere,g,x) = (g .-= real(dot(x, S.g, g)).*x)
 
 # * Stiefel
 
@@ -88,11 +85,83 @@ function project_tangent!(St::MetricStiefel, G, X)
     löwdin_transform!(G, St.S⁻ᴴ)
 end
 
+# * Sphere & Stiefel combo
+
+struct SphereStiefelCombo{Sp,St,M,F} <: Manifold
+    "Indices of columns that only need normalization"
+    normal_indidices::Vector{Int}
+    "Manifold used to normalize columns"
+    sphere::Sp
+    "Sets of indices of columns that should be mutually orthogonalized"
+    ortho_indidices::Vector{Vector{Int}}
+    "Manifold used to orthogonalize sets of columns"
+    stiefel::St
+    "Temporary storage for orthgonalization"
+    ortho_X::M
+    "Temporary storage for orthgonalization"
+    ortho_G::M
+    f::F
+end
+
+function copytotmp!(dst, src, ortho_indices)
+    for (i,j) in enumerate(ortho_indices)
+        copyto!(view(dst, :, i), view(src, :, j))
+    end
+end
+
+function copyfromtmp!(dst, src, ortho_indices)
+    for (i,j) in enumerate(ortho_indices)
+        copyto!(view(dst, :, j), view(src, :, i))
+    end
+end
+
+function retract!(ssc::SphereStiefelCombo, X)
+    retract!(ssc.sphere, view(X, :, ssc.normal_indidices))
+    for o in ssc.ortho_indidices
+        copytotmp!(ssc.ortho_X, X, o)
+        retract!(ssc.stiefel, view(ssc.ortho_X, :, 1:length(o)))
+        copyfromtmp!(X, ssc.ortho_X, o)
+    end
+    X
+end
+
+function project_tangent!(ssc::SphereStiefelCombo, G, X)
+    project_tangent!(ssc.sphere, view(G, :, ssc.normal_indidices), view(X, :, ssc.normal_indidices))
+    for o in ssc.ortho_indidices
+        sel = 1:length(o)
+        copytotmp!(ssc.ortho_G, G, o)
+        copytotmp!(ssc.ortho_X, X, o)
+        project_tangent!(ssc.stiefel, view(ssc.ortho_G, :, sel), view(ssc.ortho_X, :, sel))
+        copyfromtmp!(G, ssc.ortho_G, o)
+        copyfromtmp!(X, ssc.ortho_X, o)
+    end
+    G
+end
+
 # * Manifold setup
 
-function setup_manifold(fock::Fock, m, n)
-    # all(isone, length.(fock.symmetries)) || 
-    #     @warn "This is only valid for system without any orthogonality constraints"
-    # Optim.PowerManifold(MetricSphere(fock.S), (m,), (n,))
-    MetricStiefel(fock.S)
+function setup_manifold(f::FockProblem)
+    fock = f.fock
+    P = orbitals(fock.quantum_system)
+    m,n = size(P)
+
+    normal_indices = sort(reduce(vcat, filter(s -> length(s)==1, fock.symmetries), init=Int[]))
+    ortho_indices = filter(s -> length(s)≠1, fock.symmetries)
+    n_ortho = length.(ortho_indices)
+
+    length(normal_indices) + sum(n_ortho) == n ||
+        throw(DimensionMismatch("Number of orbitals does not agree with amount of symmetry specified"))
+
+    sphere = Optim.PowerManifold(MetricSphere(fock.S), (m,), (length(normal_indices),))
+    stiefel = MetricStiefel(fock.S)
+
+    nn = isempty(n_ortho) ? 0 : maximum(n_ortho)
+
+    T = eltype(P)
+    ortho_X = Matrix{T}(undef, m, nn)
+    ortho_G = Matrix{T}(undef, m, nn)
+
+    SphereStiefelCombo(normal_indices, sphere,
+                       ortho_indices, stiefel,
+                       ortho_X, ortho_G, f)
 end

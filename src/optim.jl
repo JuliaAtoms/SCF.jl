@@ -1,34 +1,3 @@
-mutable struct FockProblem{F,O,C,M,KWS}
-    fock::F
-    P::O
-    c::C
-    H::M
-    kws::KWS
-end
-
-function set!(f::FockProblem, v)
-    copyto!(f.P, v)
-    update!(f.fock)
-end
-
-function (f::FockProblem)()
-    energy_matrix!(f.H, f.fock)
-    f.c'f.H*f.c
-end
-
-function (f::FockProblem)(v)
-    set!(f, v)
-    f()
-end
-
-function jac!(w, v, f::FockProblem)
-    set!(f, v)
-    # Threads.@threads
-    for j = 1:length(f.fock.equations)
-        mul!(view(w,:,j), f.kws[j], view(v,:,j))
-    end
-end
-
 """
     optimize!(fock[, ::Type{Optimizer}=BFGS; kwargs...])
 
@@ -40,33 +9,32 @@ applying the `fock` operator onto test vectors (similar to how
 [`scf!`](@ref) performs Krylov iterations).
 
 """
-function optimize!(fock::Fock, ::Type{Optimizer}=BFGS;
+function optimize!(fun!::Function, fock::Fock, ::Type{Optimizer}=BFGS;
                    opt_iters=1000, g_tol=1e-8,
-                   scf_iters=0,
+                   scf_iters=200, scf_tol=1e-3, scf_method=:lobpcg,
                    verbosity=2, num_printouts=typemax(Int),
                    kwargs...) where {Optimizer<:Optim.FirstOrderOptimizer}
     P = orbitals(fock.quantum_system)
     c = coefficients(fock.quantum_system)
 
-    m,n = size(P)
     nc = length(c)
 
     H = spzeros(nc, nc)
     # Kinetic energy matrix
     T = spzeros(nc, nc)
 
-    if scf_iters > 0
-        @info "Performing initial SCF iterations"
-        scf!(fock;
-             max_iter=scf_iters, verbosity=2,
-             num_printouts=typemax(Int),
-             kwargs...)
-    end
+    kws = [KrylovWrapper(hamiltonian(eq))
+           for eq in fock.equations]
+    f = FockProblem(fock, P, c, H, kws)
+    manif = setup_manifold(f)
 
     trace,tolerance,_,eng,virial = setup_solver_trace(
-        verbosity, opt_iters, g_tol, 0, num_printouts)
+        verbosity, opt_iters, g_tol, 0, num_printouts,
+        tol_header="|g|")
 
     trace_callback = opt_state -> begin
+        fun!(P, c)
+
         # TODO: Think about moving secular problem to optimization.
         solve_secular_problem!(H, c, fock)
 
@@ -92,13 +60,19 @@ function optimize!(fock::Fock, ::Type{Optimizer}=BFGS;
                             allow_f_increases=true,
                             callback=trace_callback)
 
-    manif = setup_manifold(fock, m, n)
-
-    kws = [KrylovWrapper(hamiltonian(eq))
-           for eq in fock.equations]
-    f = FockProblem(fock, P, c, H, kws)
-
     optimizer = Optimizer(manifold=manif)
+
+    t₀ = time()
+
+    if scf_iters > 0
+        @info "Performing initial SCF iterations"
+        scf!(fun!, fock;
+             max_iter=scf_iters, tol=scf_tol,
+             method=scf_method,
+             verbosity=verbosity,
+             num_printouts=typemax(Int),
+             kwargs...)
+    end
 
     print_header(trace)
     o = @time optimize(f, (w,v) -> jac!(w,v,f), copy(P),
@@ -106,7 +80,15 @@ function optimize!(fock::Fock, ::Type{Optimizer}=BFGS;
     verbosity > 1 && display(o)
     copyto!(P, o.minimizer)
 
+    elapsed = time() - t₀
+    verbosity > 0 && println("Finished in $(elapsed) seconds")
+
+    analyze_symmetry_orbitals(fock, P, kws, verbosity=verbosity)
+
     fock
 end
+
+optimize!(fock::Fock, args...; kwargs...) =
+    optimize!((_,_)->nothing, fock, args...; kwargs...)
 
 export optimize!

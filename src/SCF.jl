@@ -31,6 +31,7 @@ include("shift_invert.jl")
 include("rotate.jl")
 include("solve_orbital_equation.jl")
 include("self_consistent_iteration.jl")
+include("fock_problem.jl")
 include("manifolds.jl")
 include("optim.jl")
 
