@@ -19,7 +19,8 @@ Both methods are controlled by the stopping tolerance `tol`.
 """
 function solve_orbital_equation!(Pj, okw, method, tol;
                                  facttol=√(eps(real(eltype(Pj)))),
-                                 io=stdout, verbosity=0)
+                                 io=stdout, verbosity=0,
+                                 kwargs...)
     verbosity > 0 && println(io, "Improving orbital using $method")
 
     update!(okw)

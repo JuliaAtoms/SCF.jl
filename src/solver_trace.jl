@@ -63,6 +63,21 @@ function (r::RelaxationColumn{T})(::Integer) where T
     (ωb,to_superscript(ωe))
 end
 
+# ** Flags
+
+mutable struct FlagsColumn <: TraceColumn
+    val::Vector{String}
+    fmt::FormatExpr
+    header::String
+end
+
+function FlagsColumn()
+    header = "Flags"
+    FlagsColumn(String[], FormatExpr("{1:5s}"), "Flags")
+end
+
+(flags::FlagsColumn)(::Integer) = (join(flags.val, ""),)
+
 # * Setup solver trace
 function setup_solver_trace(verbosity, max_iter, tol, ω, num_printouts;
                             tol_header="Tolerance")
@@ -85,8 +100,11 @@ function setup_solver_trace(verbosity, max_iter, tol, ω, num_printouts;
         virial = VirialColumn(-2.0)
         push!(trace, virial)
 
-        trace,tolerance,relaxation,eng,virial
+        flags = FlagsColumn()
+        push!(trace, flags)
+
+        trace,tolerance,relaxation,eng,virial,flags
     else
-        nothing,nothing,nothing,nothing,nothing
+        nothing,nothing,nothing,nothing,nothing,nothing
     end
 end

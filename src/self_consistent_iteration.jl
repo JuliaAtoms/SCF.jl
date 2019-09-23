@@ -54,7 +54,7 @@ function scf!(fun!::Function, fock::Fock{Q};
               double_counted_total_energy=false,
               verbosity=1, num_printouts=min(max_iter,10),
               kwargs...) where Q
-    trace,tolerance,relaxation,eng,virial =
+    trace,tolerance,relaxation,eng,virial,flags =
         setup_solver_trace(verbosity, max_iter, tol, ω, num_printouts)
 
     # Views of the orbitals and mixing coefficients in the fock object.
@@ -111,10 +111,13 @@ function scf!(fun!::Function, fock::Fock{Q};
             for eq in fock.equations]
 
     for i = 1:max_iter
-        scf_iteration!(fock, P̃, H, c̃, okws;
-                       update_mixing_coefficients=i>1,
-                       rotate_orbitals=i>1,
-                       verbosity=verbosity-2, kwargs...)
+        empty!(flags.val)
+        did_rotate = scf_iteration!(fock, P̃, H, c̃, okws;
+                                    update_mixing_coefficients=i>1,
+                                    rotate_orbitals=i>1,
+                                    verbosity=verbosity-2, kwargs...)
+        !isnothing(flags) && did_rotate && push!(flags.val, "R")
+
         fun!(P̃, c̃)
 
         for j = 1:norb
@@ -185,7 +188,7 @@ function scf!(fun!::Function, fock::Fock{Q};
     fock
 end
 
-scf!(fock::Fock{Q}, args...; kwargs...) where Q =
+scf!(fock::Fock, args...; kwargs...) =
     scf!((_,_)->nothing, fock, args...; kwargs...)
 
 """
@@ -210,7 +213,6 @@ function scf_iteration!(fock::Fock{Q,E}, P::M, H::HM, c::V,
                         verbosity=0, method=:arnoldi,
                         tol=1e-10,
                         update_mixing_coefficients=true,
-                        rotate_orbitals=true,
                         kwargs...) where {Q,E,M<:AbstractVecOrMat,
                                           HM<:AbstractMatrix,V<:AbstractVector}
     verbosity > 0 && println("Improving orbitals using $(method)")
@@ -219,8 +221,7 @@ function scf_iteration!(fock::Fock{Q,E}, P::M, H::HM, c::V,
         vPj = view(P,:,j)
 
         solve_orbital_equation!(vPj, okws[j], method, tol;
-                                # io=io,
-                                verbosity=0,
+                                verbosity=verbosity-2,
                                 kwargs...)
 
         # Normalize eigenvector and rotate it such that the
@@ -228,14 +229,8 @@ function scf_iteration!(fock::Fock{Q,E}, P::M, H::HM, c::V,
         norm_rot!(fock, vPj)
     end
 
-    if rotate_orbitals
-        should_rotate=analyze_symmetry_orbitals(fock, P, okws, verbosity=verbosity)
-        for (i,j) in should_rotate
-            rotate!(P, fock, okws, i, j)
-        end
-        verbosity > 0 &&
-            analyze_symmetry_orbitals(fock, P, okws, verbosity=verbosity)
-    end
+    did_rotate = rotate_orbitals!(P, fock, okws;
+                                  verbosity=verbosity-2, kwargs...)
 
     # energy_matrix! requires fresh integrals to be calculated
     # correctly, hence we update the integrals after improving the
@@ -245,5 +240,5 @@ function scf_iteration!(fock::Fock{Q,E}, P::M, H::HM, c::V,
     update_mixing_coefficients &&
         solve_secular_problem!(H, c, fock, tol=tol)
 
-    fock
+    did_rotate
 end

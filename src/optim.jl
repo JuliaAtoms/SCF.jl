@@ -28,7 +28,7 @@ function optimize!(fun!::Function, fock::Fock, ::Type{Optimizer}=BFGS;
     f = FockProblem(fock, P, c, H, kws)
     manif = setup_manifold(f)
 
-    trace,tolerance,_,eng,virial = setup_solver_trace(
+    trace,tolerance,_,eng,virial,flags = setup_solver_trace(
         verbosity, opt_iters, g_tol, 0, num_printouts,
         tol_header="|g|")
 
