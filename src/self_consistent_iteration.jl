@@ -111,7 +111,7 @@ function scf!(fun!::Function, fock::Fock{Q};
             for eq in fock.equations]
 
     for i = 1:max_iter
-        empty!(flags.val)
+        !isnothing(flags) && empty!(flags.val)
         did_rotate = scf_iteration!(fock, P̃, H, c̃, okws;
                                     update_mixing_coefficients=i>1,
                                     rotate_orbitals=i>1,

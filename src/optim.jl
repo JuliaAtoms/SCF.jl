@@ -74,7 +74,7 @@ function optimize!(fun!::Function, fock::Fock, ::Type{Optimizer}=BFGS;
              kwargs...)
     end
 
-    print_header(trace)
+    isnothing(trace) || print_header(trace)
     o = @time optimize(f, (w,v) -> jac!(w,v,f), copy(P),
                        optimizer, options)
     verbosity > 1 && display(o)
