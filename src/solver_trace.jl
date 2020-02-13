@@ -82,26 +82,30 @@ end
 function setup_solver_trace(verbosity, max_iter, tol, ω, num_printouts;
                             tol_header="Tolerance")
     if verbosity > 1
-        trace = SolverTrace(max_iter,
-                            CurrentStep(max_iter,
-                                        lc=LinearColorant(max_iter,1,SolverTraces.red_green_scale()),
-                                        header="Iteration"),
-                            progress_meter=false,
-                            num_printouts=num_printouts)
-
         tolerance = Tolerance(tol, tol_header, print_target=false)
-        push!(trace, tolerance)
 
-        relaxation = !iszero(ω) ? last(push!(trace, RelaxationColumn(ω))) : nothing
+        columns = (CurrentStep(max_iter,
+                               lc=LinearColorant(max_iter,1,SolverTraces.red_green_scale()),
+                               header="Iteration"),
+                   tolerance)
+
+        relaxation = if !iszero(ω)
+            columns = (columns..., RelaxationColumn(ω))
+            last(columns)
+        else
+            nothing
+        end
 
         eng = EnergyColumn(0.0),EnergyColumn(0.0,false,"⟨T̂⟩"),EnergyColumn(0.0,false, "⟨V̂⟩")
-        foreach(e -> push!(trace, e), eng)
-
         virial = VirialColumn(-2.0)
-        push!(trace, virial)
-
         flags = FlagsColumn()
-        push!(trace, flags)
+
+        columns = (columns..., eng..., virial, flags)
+
+        trace = SolverTrace(max_iter,
+                            columns...;
+                            progress_meter=false,
+                            num_printouts=num_printouts)
 
         trace,tolerance,relaxation,eng,virial,flags
     else
