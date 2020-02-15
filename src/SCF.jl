@@ -14,10 +14,7 @@ using UnicodeFun
 using Formatting
 using Crayons
 
-if VERSION < v"1.1-DEV"
-    isnothing(::Nothing) = true
-    isnothing(::Any) = false
-end
+using Compat
 
 include("quantum_systems.jl")
 include("krylov_wrapper.jl")
