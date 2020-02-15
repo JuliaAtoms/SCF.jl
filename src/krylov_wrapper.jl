@@ -22,12 +22,6 @@ are not `<:AbstractMatrix`, this needs to be overloaded.
 Base.size(A::KrylovWrapper) = size(A.hamiltonian, A)
 Base.size(A::KrylovWrapper, i) = size(A)[i]
 
-IterativeFactorizations.factorization(A::KrylovWrapper; kwargs...) =
-    IterativeFactorization(A; kwargs...)
-
-IterativeFactorizations.preconditioner(A::KrylovWrapper) =
-    IterativeFactorizations.preconditioner(A.hamiltonian)
-
 """
     mul!(y, ::KrylovWrapper, x)
 

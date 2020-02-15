@@ -45,16 +45,4 @@ overload has to be provided.
 LinearAlgebra.mul!(y, si::ShiftInvert, x) =
     ldiv!(y, si.A⁻¹, x)
 
-"""
-    mul!(y, si::ShiftInvert{<:IterativeFactorization}, x)
-
-Compute the action of the shifted-and-inverted matrix `si.A⁻¹` on `x`
-and store the result in `y` for factorizations based on
-[IterativeSolvers.jl](https://github.com/JuliaMath/IterativeSolvers.jl).
-"""
-function LinearAlgebra.mul!(y, si::ShiftInvert{<:IterativeFactorization}, x)
-    y .= false # Strong zero to get rid of NaNs
-    ldiv!(y, si.A⁻¹, x)
-end
-
 export ShiftInvert

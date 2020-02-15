@@ -35,7 +35,6 @@ function solve_orbital_equation!(Pj, okw, method, tol;
         view(schur.Q, :, 1)
     elseif method==:lobpcg
         res = lobpcg(okw, okw.S, false, reshape(Pj, :, 1), 1,
-                     # P=IterativeFactorizations.preconditioner(A),
                      tol=tol, C=okw.C)
         verbosity > 2 && show(io, res)
 

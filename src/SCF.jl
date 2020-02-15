@@ -5,7 +5,6 @@ using ArnoldiMethod
 using SparseArrays
 using IntervalSets
 using IterativeSolvers
-using IterativeFactorizations
 using Optim
 
 using SolverTraces

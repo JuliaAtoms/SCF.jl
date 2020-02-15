@@ -53,14 +53,12 @@ preconditioner constructed from all terms of $\Hamiltonian$ except the
 integral operators (exchange interaction) and the source terms
 (configuration interaction). As mentioned in the documentation for
 [`solve_orbital_equation!`](@ref), the orbital Hamiltonian must
-support [`KrylovWrapper`](@ref) as well as providing an overload for
-[`IterativeFactorizations.preconditioner`](https://github.com/jagot/IterativeFactorizations.jl).
+support [`KrylovWrapper`](@ref).
 
 ```@docs
 ShiftInvert
 ShiftInvert(A::M, σ::T=leftendpoint(gershgorin_bounds(A)); factorization=factorize) where {M<:AbstractMatrix, T}
 LinearAlgebra.mul!(y, si::ShiftInvert, x)
-LinearAlgebra.mul!(y, si::ShiftInvert{<:IterativeFactorization}, x)
 ```
 
 ### Gershgorin's circle theorem
