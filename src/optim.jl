@@ -12,6 +12,7 @@ applying the `fock` operator onto test vectors (similar to how
 function optimize!(fun!::Function, fock::Fock, ::Type{Optimizer}=BFGS;
                    opt_iters=1000, g_tol=1e-8,
                    scf_iters=200, scf_tol=1e-3, scf_method=:lobpcg,
+                   update_mixing_coefficients=true,
                    verbosity=2, num_printouts=typemax(Int),
                    kwargs...) where {Optimizer<:Optim.FirstOrderOptimizer}
     P = orbitals(fock.quantum_system)
@@ -36,7 +37,7 @@ function optimize!(fun!::Function, fock::Fock, ::Type{Optimizer}=BFGS;
         fun!(P, c)
 
         # TODO: Think about moving secular problem to optimization.
-        solve_secular_problem!(H, c, fock)
+        solve_secular_problem!(H, c, fock, update_mixing_coefficients)
 
         if !isnothing(trace)
             tolerance.current = opt_state.g_norm
@@ -69,6 +70,7 @@ function optimize!(fun!::Function, fock::Fock, ::Type{Optimizer}=BFGS;
         scf!(fun!, fock;
              max_iter=scf_iters, tol=scf_tol,
              method=scf_method,
+             update_mixing_coefficients=update_mixing_coefficients,
              verbosity=verbosity,
              num_printouts=typemax(Int),
              kwargs...)

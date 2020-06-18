@@ -52,6 +52,7 @@ function scf!(fun!::Function, fock::Fock{Q};
               max_iter=200, tol=1e-8,
               ω=0, monotonous_window=10, ωfactor=0.9, ωmax=0.999,
               double_counted_total_energy=false,
+              update_mixing_coefficients=true,
               verbosity=1, num_printouts=min(max_iter,10),
               kwargs...) where Q
     trace,tolerance,relaxation,eng,virial,flags =
@@ -60,10 +61,6 @@ function scf!(fun!::Function, fock::Fock{Q};
     # Views of the orbitals and mixing coefficients in the fock object.
     P = orbitals(fock.quantum_system)
     c = coefficients(fock.quantum_system)
-
-    # Current estimates
-    P̃ = copy(P)
-    c̃ = copy(c)
 
     norb = size(P,2)
     nc = length(c)
@@ -90,7 +87,7 @@ function scf!(fun!::Function, fock::Fock{Q};
 
     # Energy matrix
     H = spzeros(nc, nc)
-    solve_secular_problem!(H, c, fock)
+    solve_secular_problem!(H, c, fock, update_mixing_coefficients)
     # Energy matrix for double-counted terms
     Hd = spzeros(nc, nc)
     # Kinetic energy matrix
@@ -110,10 +107,14 @@ function scf!(fun!::Function, fock::Fock{Q};
     okws = [OrthogonalKrylovWrapper(hamiltonian(eq))
             for eq in fock.equations]
 
+    # Current estimates
+    P̃ = copy(P)
+    c̃ = copy(c)
+
     for i = 1:max_iter
         !isnothing(flags) && empty!(flags.val)
         did_rotate = scf_iteration!(fock, P̃, H, c̃, okws;
-                                    update_mixing_coefficients=i>1,
+                                    update_mixing_coefficients=update_mixing_coefficients && i>1,
                                     rotate_orbitals=i>1,
                                     verbosity=verbosity-2, kwargs...)
         !isnothing(flags) && did_rotate && push!(flags.val, "R")
@@ -237,8 +238,7 @@ function scf_iteration!(fock::Fock{Q,E}, P::M, H::HM, c::V,
     # orbitals.
     update!(fock; verbosity=max(0,verbosity-2))
 
-    update_mixing_coefficients &&
-        solve_secular_problem!(H, c, fock, tol=tol)
+    solve_secular_problem!(H, c, fock, update_mixing_coefficients, tol=tol)
 
     did_rotate
 end
