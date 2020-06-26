@@ -35,10 +35,10 @@ function optimize!(fun!::Function, fock::Fock, ::Type{Optimizer}=BFGS;
         tol_header="|g|")
 
     trace_callback = opt_state -> begin
-        fun!(P, c)
-
         # TODO: Think about moving secular problem to optimization.
         solve_secular_problem!(H, c, fock, update_mixing_coefficients)
+
+        fun!(P, c)
 
         if !isnothing(trace)
             tolerance.current = opt_state.g_norm

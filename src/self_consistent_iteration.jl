@@ -146,6 +146,7 @@ function scf!(fun!::Function, fock::Fock{Q};
             lmul!(1-ω, c̃)
             c[:] += c̃[:] # Is this efficient?
             normalize!(c)
+            copyto!(c̃, c)
         end
 
         circshiftpush!(Δhistory, aΔ)

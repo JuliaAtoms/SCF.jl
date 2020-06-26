@@ -22,7 +22,7 @@ function solve_secular_problem!(H::M, c::C, fock::F, update_mixing_coefficients;
         # guess for the Arnoldi procedure.
         schur,history = partialschur(H, nev=1, tol=tol, which=SR())
         copyto!(c, schur.Q[:,1])
-
-        normalize!(c)
     end
+
+    normalize!(c)
 end
