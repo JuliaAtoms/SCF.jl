@@ -58,7 +58,9 @@ function optimize!(fun!::Function, fock::Fock, ::Type{Optimizer}=BFGS;
         false
     end
 
-    options = Optim.Options(iterations=opt_iters, g_tol=g_tol,
+    options = Optim.Options(iterations=opt_iters,
+                            f_tol=f_tol,
+                            g_tol=g_tol,
                             allow_f_increases=true,
                             callback=trace_callback)
 

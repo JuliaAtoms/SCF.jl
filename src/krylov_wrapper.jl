@@ -19,18 +19,17 @@ Base.size(A::KrylovWrapper{T,<:AbstractMatrix}) where T = size(A.hamiltonian)
 Returns the dimension of the `KrylovWrapper`. For Hamiltonians which
 are not `<:AbstractMatrix`, this needs to be overloaded.
 """
-Base.size(A::KrylovWrapper) = size(A.hamiltonian, A)
+Base.size(A::KrylovWrapper) = size(A.hamiltonian)
 Base.size(A::KrylovWrapper, i) = size(A)[i]
 
 """
-    mul!(y, ::KrylovWrapper, x)
+    mul!(y, ::KrylovWrapper, x[, α=1, β=0])
 
 Compute the action of the wrapped Hamiltonian on `x` and store it in
-`y`. For Hamiltonians which are not `<:AbstractMatrix`, this needs to
-be overloaded.
+`y`
 """
-LinearAlgebra.mul!(y::V₁, A::KrylovWrapper{T,Hamiltonian}, x::V₂) where {V₁,V₂,T,Hamiltonian<:AbstractMatrix} =
-    mul!(y, A.hamiltonian, x)
+LinearAlgebra.mul!(y, A::KrylovWrapper, x, α::Number=true, β::Number=false) =
+    mul!(y, A.hamiltonian, x, α, β)
 
 Base.show(io::IO, kw::KrylovWrapper{T}) where T =
     write(io, "KrylovWrapper{$T} of size $(size(kw))")
@@ -46,7 +45,7 @@ again, i.e. `y = (1-C*C')*A*(1-C*C')*x = (1-C*C')*A*x′`. `S` is the
 overlap matrix of the basis functions, used to compute the inner
 products.
 """
-struct OrthogonalKrylovWrapper{H,K<:KrylovWrapper,V,M,SM}
+struct OrthogonalKrylovWrapper{H,K,V,M,SM}
     h::H
     A::K
     x′::V
