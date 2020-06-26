@@ -6,6 +6,7 @@ using SparseArrays
 using IntervalSets
 using IterativeSolvers
 using Optim
+using LineSearches
 
 using SolverTraces
 import SolverTraces: base_exp

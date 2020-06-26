@@ -10,9 +10,10 @@ applying the `fock` operator onto test vectors (similar to how
 
 """
 function optimize!(fun!::Function, fock::Fock, ::Type{Optimizer}=BFGS;
-                   opt_iters=1000, g_tol=1e-8,
+                   opt_iters=1000, f_tol=0.0, g_tol=1e-8,
                    scf_iters=200, scf_tol=1e-3, scf_method=:lobpcg,
                    update_mixing_coefficients=true,
+                   linesearch=LineSearches.HagerZhang(),
                    verbosity=2, num_printouts=typemax(Int),
                    kwargs...) where {Optimizer<:Optim.FirstOrderOptimizer}
     P = orbitals(fock.quantum_system)
@@ -61,7 +62,7 @@ function optimize!(fun!::Function, fock::Fock, ::Type{Optimizer}=BFGS;
                             allow_f_increases=true,
                             callback=trace_callback)
 
-    optimizer = Optimizer(manifold=manif)
+    optimizer = Optimizer(manifold=manif, linesearch=linesearch)
 
     t₀ = time()
 
