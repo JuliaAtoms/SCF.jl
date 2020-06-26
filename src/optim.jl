@@ -83,6 +83,8 @@ function optimize!(fun!::Function, fock::Fock, ::Type{Optimizer}=BFGS;
     verbosity > 1 && display(o)
     copyto!(P, o.minimizer)
 
+    rayleigh_ritz!(P, fock, kws; verbosity=verbosity)
+
     elapsed = time() - t₀
     verbosity > 0 && println("Finished in $(elapsed) seconds")
 

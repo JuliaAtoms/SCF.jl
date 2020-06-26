@@ -80,6 +80,44 @@ rotate!(P::AbstractVecOrMat, fock::Fock, okws::Vector,
             rotate!(P, fock, krylov_wrapper(okws[i]),
                     i, j, ϵ; kwargs...)
 
+function rayleigh_ritz!(P, fock, kws; verbosity=0)
+    verbosity > 0 && @info "Rayleigh–Ritz rotation"
+    T = eltype(P)
+    S = fock.S
+    tmp = zeros(T, size(P,1))
+    for sym ∈ fock.symmetries
+        ns = length(sym)
+        if verbosity > 2
+            println(repeat("-", 100))
+            println("Symmetry: ", sym)
+        end
+        f = zeros(T, ns, ns)
+        Ps = P[:,sym]
+        for (ii,i) ∈ enumerate(sym)
+            vPi = view(Ps, :, ii)
+            A = krylov_wrapper(kws[i])
+            for (jj,j) ∈ enumerate(sym)
+                j < i && continue
+                vPj = view(Ps, :, jj)
+                f[ii,jj] = fock_matrix_element(A, S, vPi, vPj, tmp)
+                f[jj,ii] = fock_matrix_element(A, S, vPj, vPi, tmp)
+            end
+        end
+        ee = eigen(f)
+        mul!(view(P,:,sym)', ee.vectors', Ps')
+        if verbosity > 2
+            println("Fock submatrix:")
+            display(f)
+            println("Energies:")
+            display(ee.values')
+            display(ee.vectors)
+            println()
+        end
+    end
+    update!(fock)
+    true
+end
+
 function rotate_orbitals!(P, fock, kws;
                           verbosity=0,
                           rotate_orbitals=true, rotϵ=1e-3,
@@ -93,6 +131,8 @@ function rotate_orbitals!(P, fock, kws;
                 rotate!(P, fock, kws, i, j, rotϵ, verbosity=verbosity)
             end
             !isempty(should_rotate)
+        elseif rotation_method == :eigen
+            rayleigh_ritz!(P, fock, kws; verbosity=verbosity)
         else
             throw(ArgumentError("Unknown orbital rotation method $(rotation_method)"))
         end
