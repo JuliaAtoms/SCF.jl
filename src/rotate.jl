@@ -1,15 +1,7 @@
 using Roots
 using PrettyTables
 
-function overlap(S, u, v, tmp)
-    mul!(tmp, S, v)
-    u'tmp
-end
-
-function fock_matrix_element(f, S, u, v, tmp, tmp2)
-    mul!(tmp, f, v)
-    overlap(S, u, tmp, tmp2)
-end
+fock_matrix_element(f, S, u, v, tmp) = dot(u, S, mul!(tmp, f, v))
 
 krylov_wrapper(kw::KrylovWrapper) = kw
 krylov_wrapper(okw::OrthogonalKrylovWrapper) = okw.A
@@ -22,7 +14,6 @@ function analyze_symmetry_orbitals(fock, P::AbstractVecOrMat{T},
     data = zeros(T, sum(length(s)*(length(s)+1)÷2 for s in fock.symmetries), 3)
     labels = Vector{String}()
     tmp = zeros(T, size(P,1))
-    tmp2 = zeros(T, size(P,1))
     ii = 1
     should_rotate = Vector{Tuple{Int,Int}}()
     for sym ∈ fock.symmetries
@@ -32,9 +23,9 @@ function analyze_symmetry_orbitals(fock, P::AbstractVecOrMat{T},
             for j ∈ sym
                 j < i && continue
                 vPj = view(P, :, j)
-                data[ii,1] = overlap(S, vPi, vPj, tmp)
-                afb = data[ii,2] = fock_matrix_element(A, S, vPi, vPj, tmp, tmp2)
-                data[ii,3] = fock_matrix_element(A, S, vPj, vPi, tmp, tmp2)
+                data[ii,1] = dot(vPi, S, vPj)
+                afb = data[ii,2] = fock_matrix_element(A, S, vPi, vPj, tmp)
+                data[ii,3] = fock_matrix_element(A, S, vPj, vPi, tmp)
                 push!(labels, "$i – $j")
                 ii += 1
                 i ≠ j && abs(afb) > ϵ && push!(should_rotate, (i,j))
@@ -58,18 +49,17 @@ function rotate!(u::AbstractVector, v::AbstractVector, η, tmp::AbstractVector)
     u,v
 end
 
-function rotate!(P::AbstractVecOrMat, fock::Fock, A::KrylovWrapper,
+function rotate!(P::AbstractVecOrMat, fock::Fock, A,
                  i::Integer, j::Integer, ϵ; verbosity=0)
     S = fock.S
 
     a = view(P,:,i)
     b = view(P,:,j)
     tmp = similar(a)
-    tmp2 = similar(b)
 
-    fba = fock_matrix_element(A, S, b, a, tmp, tmp2)
-    faa = fock_matrix_element(A, S, a, a, tmp, tmp2)
-    fbb = fock_matrix_element(A, S, b, b, tmp, tmp2)
+    fba = fock_matrix_element(A, S, b, a, tmp)
+    faa = fock_matrix_element(A, S, a, a, tmp)
+    fbb = fock_matrix_element(A, S, b, b, tmp)
 
     g = (faa-fbb)
     g′ = fba

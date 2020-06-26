@@ -19,3 +19,6 @@ SolverTraces = "619b3e1a-df4a-11e8-3b0b-a997e0925a8d"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 UnicodeFun = "1cfade01-22cf-5700-b092-accc4b62d6e1"
+
+[compat]
+julia = "1.3"
