@@ -1,9 +1,11 @@
 module SCF
 
 using LinearAlgebra
-using ArnoldiMethod
+using BandedMatrices
 using SparseArrays
 using IntervalSets
+
+using ArnoldiMethod
 using IterativeSolvers
 using Optim
 using LineSearches

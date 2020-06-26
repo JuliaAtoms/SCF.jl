@@ -23,15 +23,16 @@ Optim.project_tangent!(S::MetricSphere,g,x) = (g .-= real(dot(x, S.g, g)).*x)
 
 matfun(f::Function, ee) = ee.vectors*Diagonal(f.(ee.values))*ee.vectors'
 
-# For orthogonal bases, e.g. FEDVRQuasi.jl
+# For orthogonal bases, e.g. FE-DVR
 löwdin_transform(g::UniformScaling{Bool}) = g,g
-# For quasi-orthgonal bases, e.g. FiniteDifferencesQuasi.jl
+# For quasi-orthogonal bases, e.g. finite-differences
 löwdin_transform(g::UniformScaling) = inv(√(g.λ))*I,√(g.λ)*I
-# For non-orthogonal bases, e.g. BSplinesQuasi.jl
+# For non-orthogonal bases, e.g. B-splines
 function löwdin_transform(g::AbstractMatrix)
     ee = eigen(g)
     matfun(λ -> inv(√(λ)), ee), matfun(λ -> √(λ), ee)
 end
+löwdin_transform(g::BandedMatrix) = löwdin_transform(Symmetric(g))
 
 löwdin_transform!(v, ::UniformScaling{Bool}) = v
 löwdin_transform!(v, S⁻ᴴ) = (v .= S⁻ᴴ*v)
