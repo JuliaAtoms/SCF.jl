@@ -27,12 +27,22 @@ matfun(f::Function, ee) = ee.vectors*Diagonal(f.(ee.values))*ee.vectors'
 löwdin_transform(g::UniformScaling{Bool}) = g,g
 # For quasi-orthogonal bases, e.g. finite-differences
 löwdin_transform(g::UniformScaling) = inv(√(g.λ))*I,√(g.λ)*I
+löwdin_transform(g::Diagonal) = inv(√(g)),√(g)
 # For non-orthogonal bases, e.g. B-splines
 function löwdin_transform(g::AbstractMatrix)
     ee = eigen(g)
     matfun(λ -> inv(√(λ)), ee), matfun(λ -> √(λ), ee)
 end
-löwdin_transform(g::BandedMatrix) = löwdin_transform(Symmetric(g))
+function löwdin_transform(g::BandedMatrix)
+    m,n = size(g)
+    m == n || throw(DimensionMismatch("Löwdin transform only valid for square matrices"))
+    l,u = bandwidths(g)
+    if l == u == 0
+        löwdin_transform(Diagonal(g))
+    else
+        löwdin_transform(Symmetric(g))
+    end
+end
 
 löwdin_transform!(v, ::UniformScaling{Bool}) = v
 löwdin_transform!(v, S⁻ᴴ) = (v .= S⁻ᴴ*v)
