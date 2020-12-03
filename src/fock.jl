@@ -74,6 +74,14 @@ function energy_matrix!(H::HM, fock::F, which::Symbol=:total_energy) where {HM<:
     H
 end
 
+function energy(fock::Fock, which::Symbol)
+    c = coefficients(fock.quantum_system)
+    nc = length(c)
+    T = zeros(eltype(fock.quantum_system), nc, nc)
+    energy_matrix!(T, fock, which)
+    dot(c, T, c)
+end
+
 """
     hamiltonian(equation::Equation)
 
