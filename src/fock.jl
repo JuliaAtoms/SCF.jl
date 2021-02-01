@@ -82,6 +82,8 @@ function energy(fock::Fock, which::Symbol)
     dot(c, T, c)
 end
 
+orbital_energies(fock) = map(energy, fock.equations)
+
 """
     hamiltonian(equation::Equation)
 
