@@ -2,7 +2,10 @@
 #+AUTHOR: Stefanos Carlström
 #+EMAIL: stefanos.carlstrom@gmail.com
 
-[[https://juliaatoms.github.io/SCF.jl/dev/index.html][https://img.shields.io/badge/docs-dev-blue.svg]]
+[[https://JuliaAtoms.github.io/SCF.jl/stable][https://img.shields.io/badge/docs-stable-blue.svg]]
+[[https://JuliaAtoms.github.io/SCF.jl/dev][https://img.shields.io/badge/docs-dev-blue.svg]]
+[[https://github.com/JuliaAtoms/SCF.jl/actions][https://github.com/JuliaAtoms/SCF.jl/workflows/CI/badge.svg]]
+[[https://codecov.io/gh/JuliaAtoms/SCF.jl][https://codecov.io/gh/JuliaAtoms/SCF.jl/branch/master/graph/badge.svg]]
 
 Implementation of the Self-Consistent-Field (SCF) method for solving
 integro-differential equations of the kind that arise in the
