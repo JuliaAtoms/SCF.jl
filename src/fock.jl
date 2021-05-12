@@ -82,7 +82,8 @@ function energy(fock::Fock, which::Symbol)
     dot(c, T, c)
 end
 
-orbital_energies(fock) = map(energy, fock.equations)
+orbital_energies(fock, which::Symbol=:total) =
+    map(Base.Fix2(energy, which), fock.equations)
 
 """
     hamiltonian(equation::Equation)
