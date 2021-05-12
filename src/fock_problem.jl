@@ -13,7 +13,7 @@ end
 
 function (f::FockProblem)()
     energy_matrix!(f.H, f.fock)
-    f.c'f.H*f.c
+    real(f.c'f.H*f.c)
 end
 
 function (f::FockProblem)(v)

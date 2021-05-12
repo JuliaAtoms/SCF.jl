@@ -21,9 +21,9 @@ function optimize!(fun!::Function, fock::Fock, ::Type{Optimizer}=BFGS;
 
     nc = length(c)
 
-    H = spzeros(nc, nc)
+    H = spzeros(eltype(c), nc, nc)
     # Kinetic energy matrix
-    T = spzeros(nc, nc)
+    T = spzeros(eltype(c), nc, nc)
 
     kws = [KrylovWrapper(hamiltonian(eq))
            for eq in fock.equations]
@@ -47,10 +47,10 @@ function optimize!(fun!::Function, fock::Fock, ::Type{Optimizer}=BFGS;
             energy_matrix!(T, fock, :kinetic_energy)
             ET = c'T*c
             EV = Etot-ET
-            eng[1].E = Etot
-            eng[2].E = ET
-            eng[3].E = EV
-            virial.V = EV/ET
+            eng[1].E = real(Etot)
+            eng[2].E = real(ET)
+            eng[3].E = real(EV)
+            virial.V = real(EV/ET)
 
             SolverTraces.next!(trace)
         end
