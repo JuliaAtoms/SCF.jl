@@ -80,8 +80,8 @@ function optimize!(fun!::Function, fock::Fock, ::Type{Optimizer}=BFGS;
     end
 
     isnothing(trace) || print_header(trace)
-    o = @time optimize(f, (w,v) -> jac!(w,v,f), copy(P),
-                       optimizer, options)
+    o = optimize(f, (w,v) -> jac!(w,v,f), copy(P),
+                 optimizer, options)
     verbosity > 1 && display(o)
     copyto!(P, o.minimizer)
 

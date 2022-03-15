@@ -33,7 +33,8 @@ function analyze_symmetry_orbitals(fock, P::AbstractVecOrMat{T},
         end
     end
     if verbosity > 0
-        pretty_table(hcat(labels, data), header=["i – j", "⟨i|j⟩", "⟨i|𝔣|j⟩", "⟨j|𝔣|i⟩"])
+        pretty_table(hcat(labels, data), header=["i – j", "⟨i|j⟩", "⟨i|𝔣|j⟩", "⟨j|𝔣|i⟩"],
+                     hlines=[1], vlines=[1])
     end
 
     should_rotate
