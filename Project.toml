@@ -23,7 +23,7 @@ UnicodeFun = "1cfade01-22cf-5700-b092-accc4b62d6e1"
 
 [compat]
 ArnoldiMethod = "0.2"
-BandedMatrices = "0.16"
+BandedMatrices = "0.16, 0.17"
 Compat = "3.27"
 Crayons = "4.0"
 Formatting = "0.4"
